@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma";
-import type { CreateUserInput, UpdateUserInput } from "../validators/users.validators";
+import type { CreateUserInput, UpdateUserInput, UpdatePasswordInput } from "../validators/users.validators";
 
 
 export const usersService = {
@@ -100,6 +100,24 @@ export const usersService = {
     return { ok: true as const, user };
   },
 
+  //------------------------------------//
+  //             MAJ du mdp             //
+  //------------------------------------//
+  async updatePassword(id: string, data: UpdatePasswordInput) {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) {
+      return { ok: false as const, error: "USER_NOT_FOUND" as const };
+    }
+
+    const passwordHash = await bcrypt.hash(data.password, 10);
+
+    await prisma.user.update({
+      where: { id },
+      data: { password: passwordHash }
+    });
+
+    return { ok: true as const };
+  },
 
 
 
