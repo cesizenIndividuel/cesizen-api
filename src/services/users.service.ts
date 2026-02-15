@@ -4,7 +4,9 @@ import type { CreateUserInput } from "../validators/users.validators";
 
 export const usersService = {
 
-  //#region Creation user
+  //----------------------------------//
+  //          Creer un user           //
+  //----------------------------------//
   async create(data: CreateUserInput) {
     // Vérifier si l'email existe déjà
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
@@ -26,9 +28,10 @@ export const usersService = {
 
     return { ok: true as const, user };
   },
-  //#endregion
 
-  //#region Liste d'user
+  //-----------------------------------//
+  //          Liste des user           //
+  //-----------------------------------//
   async findAll() {
     const users = await prisma.user.findMany({
       select: {
@@ -39,8 +42,34 @@ export const usersService = {
     });
 
     return users;
-  }
-  //#endregion
+  },
+  
+  //-----------------------------------//
+  //          Détail d'un user         //
+  //-----------------------------------//
+  async findById(id: string) {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true, createdAt: true }
+    });
+
+    return user;
+  },
+
+  //------------------------------------//
+  //          Supprimer un user         //
+  //------------------------------------//
+  async deleteById(id: string) {
+    // On vérifie d'abord l'existence pour renvoyer 404 proprement
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) {
+      return { ok: false as const };
+    }
+    await prisma.user.delete({ where: { id } });
+    return { ok: true as const };
+  },
+
+
 
 
 
