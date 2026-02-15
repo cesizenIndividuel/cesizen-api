@@ -30,7 +30,6 @@ export const usersService = {
     return { ok: true as const, user };
   },
 
-
   //-----------------------------------//
   //          Liste des user           //
   //-----------------------------------//
@@ -46,7 +45,6 @@ export const usersService = {
     return users;
   },
   
-
   //-----------------------------------//
   //          Détail d'un user         //
   //-----------------------------------//
@@ -58,7 +56,6 @@ export const usersService = {
 
     return user;
   },
-
 
   //------------------------------------//
   //          Supprimer un user         //
@@ -72,7 +69,6 @@ export const usersService = {
     await prisma.user.delete({ where: { id } });
     return { ok: true as const };
   },
-
 
   //------------------------------------//
   //            MAJ d'un user           //
@@ -118,7 +114,4 @@ export const usersService = {
 
     return { ok: true as const };
   },
-
-
-
 };

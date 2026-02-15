@@ -16,7 +16,6 @@ export const createUser = asyncHandler (async (req: Request, res: Response) => {
     return res.status(409).json({ error: result.error });
   }
   return res.status(201).json(result.user);
-
 })
 
 //----------------------------------//
