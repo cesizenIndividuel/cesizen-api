@@ -21,3 +21,10 @@ export async function createUser(req: Request, res: Response) {
 
   return res.status(201).json(result.user);
 }
+
+
+export async function getUsers(req: Request, res: Response) {
+  const users = await usersService.findAll();
+  return res.status(200).json(users);
+}
+
