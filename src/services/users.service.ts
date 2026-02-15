@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma";
-import type { CreateUserInput } from "../validators/users.validators";
+import type { CreateUserInput, UpdateUserInput } from "../validators/users.validators";
+
 
 export const usersService = {
 
@@ -29,6 +30,7 @@ export const usersService = {
     return { ok: true as const, user };
   },
 
+
   //-----------------------------------//
   //          Liste des user           //
   //-----------------------------------//
@@ -44,6 +46,7 @@ export const usersService = {
     return users;
   },
   
+
   //-----------------------------------//
   //          Détail d'un user         //
   //-----------------------------------//
@@ -55,6 +58,7 @@ export const usersService = {
 
     return user;
   },
+
 
   //------------------------------------//
   //          Supprimer un user         //
@@ -70,6 +74,31 @@ export const usersService = {
   },
 
 
+  //------------------------------------//
+  //            MAJ d'un user           //
+  //------------------------------------//
+  async updateById(id: string, data: UpdateUserInput) {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) {
+      return { ok: false as const, error: "USER_NOT_FOUND" as const };
+    }
+
+    // Si changement email => doit etre unique
+    if (data.email && data.email !== existing.email) {
+      const emailUsed = await prisma.user.findUnique({ where: { email: data.email } });
+      if (emailUsed) {
+        return { ok: false as const, error: "EMAIL_ALREADY_USED" as const };
+      }
+    }
+    
+    const user = await prisma.user.update({
+      where: { id },
+      data: { ...data },
+      select: { id: true, email: true, createdAt: true }
+    });
+
+    return { ok: true as const, user };
+  },
 
 
 

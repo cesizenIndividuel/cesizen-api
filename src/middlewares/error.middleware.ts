@@ -30,6 +30,13 @@ export function errorMiddleware(err: unknown, req: Request, res: Response, next:
       code: err.code
     });
   }
+  
+  if (err && typeof err === "object" && "type" in err && (err as any).type === "entity.parse.failed") {
+    return res.status(400).json({
+      error: "INVALID_JSON",
+      message: "JSON invalide (virgule en trop ? guillemets manquants ?)"
+    });
+  }
 
   // 500 : erreur inconnue
   console.error(err);

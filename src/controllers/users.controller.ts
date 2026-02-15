@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { createUserSchema, userIdParamSchema } from "../validators/users.validators";
+import { createUserSchema, userIdParamSchema, updateUserSchema } from "../validators/users.validators";
 import { usersService } from "../services/users.service";
 
 //----------------------------------//
@@ -88,4 +88,40 @@ export async function deleteUser(req: Request, res: Response, next: NextFunction
     return next(err);
   }
 }
+
+//-------------------------------------//
+//            MAJ d'un user            //
+//-------------------------------------//
+
+export async function updateUser(req: Request, res: Response, next: NextFunction) {
+  // Valider id
+  const idParsed = userIdParamSchema.safeParse(req.params);
+  if (!idParsed.success) {
+    return res.status(400).json({ error: "VALIDATION_ERROR", details: idParsed.error.issues });
+  }
+
+  // Valider body
+  const bodyParsed = updateUserSchema.safeParse(req.body);
+  if (!bodyParsed.success) {
+    return res.status(400).json({ error: "VALIDATION_ERROR", details: bodyParsed.error.issues });
+  }
+
+  try {
+    const result = await usersService.updateById(idParsed.data.id, bodyParsed.data);
+
+    if (!result.ok) {
+      if (result.error === "EMAIL_ALREADY_USED") {
+        return res.status(409).json({ error: result.error });
+      }
+      return res.status(404).json({ error: result.error });
+    }
+
+    return res.status(200).json(result.user);
+  } 
+  catch (err) {
+    return next(err);
+  }
+}
+
+
 
