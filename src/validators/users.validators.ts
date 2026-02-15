@@ -1,16 +1,21 @@
 import { z } from "zod";
 
 //Les règles
-const emailSchema = z.string().email("Email invalide").trim();
-
+const emailSchema = z.email("Email invalide").trim();
 const passwordSchema = z.string().min(8, "Mot de passe : 8 caractères minimum");
+const uuidSchema = z.uuid("id invalide (UUID attendu)");
+const firstNameSchema = z.string().min(1).max(50);
+const lastNameSchema = z.string().min(1).max(50);
 
-const uuidSchema = z.string().uuid("id invalide (UUID attendu)");
+
+export const roleSchema = z.enum(["USER", "ADMIN"]);
 
 //Verifie la creation d'un user
 export const createUserSchema = z.object({
   email: emailSchema,
-  password: passwordSchema
+  password: passwordSchema,
+  firstName: firstNameSchema.optional(),
+  lastName: lastNameSchema.optional()
 });
 
 //Verifie l'Id d'un user
@@ -20,9 +25,11 @@ export const userIdParamSchema = z.object({
 
 //Verifie la maj d'un user
 export const updateUserSchema = z.object({
-  email: emailSchema.optional()
+  email: emailSchema.optional(),
+  firstName: firstNameSchema.optional(),
+  lastName: lastNameSchema.optional(),
 }).refine(
-  (data) => data.email !== undefined,
+  (data) => Object.keys(data).length > 0,
   {
     message: "Au moins un champ doit être fourni"
   }
@@ -32,6 +39,7 @@ export const updateUserSchema = z.object({
 export const updatePasswordSchema = z.object({
   password: passwordSchema
 });
+
 
 
 

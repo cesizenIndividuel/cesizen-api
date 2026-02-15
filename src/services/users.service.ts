@@ -9,7 +9,6 @@ export const usersService = {
   //          Creer un user           //
   //----------------------------------//
   async create(data: CreateUserInput) {
-    // Vérifier si l'email existe déjà
     const existing = await prisma.user.findUnique({ where: { email: data.email } });
     if (existing) {
       return { ok: false as const, error: "EMAIL_ALREADY_USED" as const };
@@ -17,14 +16,22 @@ export const usersService = {
 
     const passwordHash = await bcrypt.hash(data.password, 10);
 
-    // Créer l'user en bdd
     const user = await prisma.user.create({
       data: {
         email: data.email,
-        password: passwordHash
+        password: passwordHash,
+        firstName: data.firstName,
+        lastName: data.lastName
       },
-      // On en renvoie pas le mdp
-      select: { id: true, email: true, createdAt: true }
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        createdAt: true
+      }
     });
 
     return { ok: true as const, user };
@@ -38,22 +45,33 @@ export const usersService = {
       select: {
         id: true,
         email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
         createdAt: true
       }
     });
 
     return users;
   },
-  
+
   //-----------------------------------//
   //          Détail d'un user         //
   //-----------------------------------//
   async findById(id: string) {
     const user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, email: true, createdAt: true }
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        createdAt: true
+      }
     });
-
     return user;
   },
 
@@ -90,7 +108,15 @@ export const usersService = {
     const user = await prisma.user.update({
       where: { id },
       data: { ...data },
-      select: { id: true, email: true, createdAt: true }
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        createdAt: true
+      }
     });
 
     return { ok: true as const, user };
