@@ -66,7 +66,6 @@ export const usersService = {
   //          Supprimer un user         //
   //------------------------------------//
   async deleteById(id: string) {
-    // On vérifie d'abord l'existence pour renvoyer 404 proprement
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) {
       return { ok: false as const };
