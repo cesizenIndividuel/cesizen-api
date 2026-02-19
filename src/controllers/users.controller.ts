@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
 import { createUserSchema, userIdParamSchema, updateUserSchema, updatePasswordSchema } from "../validators/users.validators";
 import { usersService } from "../services/users.service";
+import fs from "fs";
+import path from "path";
 
 //----------------------------------//
 //          Creer un user           //
@@ -93,4 +95,38 @@ export const updateUserPassword = asyncHandler (async (req: Request, res: Respon
   return res.status(204).send();
 })
 
+//-------------------------------------//
+//          MAJ de la photo            //
+//-------------------------------------//
+export const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(userIdParamSchema, req.params, res);
+  if (!params) return;
 
+  //Verifie qu'un fichier a été envoyé
+  if (!req.file) {
+    return res.status(400).json({ error: "NO_FILE_UPLOADED" });
+  }
+
+  //Creation de l'url de l'image
+  const avatarUrl = `/uploads/users/${req.file.filename}`;
+  const result = await usersService.updateAvatar(params.id, avatarUrl);
+
+  // Si user inexistant -> on supprime le fichier uploadé
+  if (!result.ok) {
+    const uploadedPath = path.join(process.cwd(), "uploads", "users", req.file.filename);
+    if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
+    return res.status(404).json({ error: result.error });
+  }
+
+  // Suppression de l'ancienne photo
+  if (result.previousAvatarUrl) {
+    const oldFilename = result.previousAvatarUrl.replace("/uploads/users/", "");
+    const oldPath = path.join(process.cwd(), "uploads", "users", oldFilename);
+
+    if (fs.existsSync(oldPath)) {
+      fs.unlinkSync(oldPath);
+    }
+  }
+
+  return res.status(200).json(result.user);
+});

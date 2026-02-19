@@ -140,4 +140,32 @@ export const usersService = {
 
     return { ok: true as const };
   },
+
+  //------------------------------------//
+  //         MAJ de la photo            //
+  //------------------------------------//
+  async updateAvatar(id: string, avatarUrl: string) {
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) return { ok: false as const, error: "USER_NOT_FOUND" as const };
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: { avatarUrl },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        avatarUrl: true,
+        createdAt: true
+      }
+    });
+
+    return { ok: true as const, user, previousAvatarUrl: existing.avatarUrl };
+  },
+
+
+
 };
