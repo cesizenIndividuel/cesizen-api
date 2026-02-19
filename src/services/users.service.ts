@@ -2,6 +2,17 @@ import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma";
 import type { CreateUserInput, UpdateUserInput, UpdatePasswordInput } from "../validators/users.validators";
 
+const userSelect = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  role: true,
+  isActive: true,
+  avatarUrl: true,
+  createdAt: true
+} as const;
+
 
 export const usersService = {
 
@@ -23,15 +34,7 @@ export const usersService = {
         firstName: data.firstName,
         lastName: data.lastName
       },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        createdAt: true
-      }
+      select: userSelect
     });
 
     return { ok: true as const, user };
@@ -42,15 +45,7 @@ export const usersService = {
   //-----------------------------------//
   async findAll() {
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        createdAt: true
-      }
+      select: userSelect
     });
 
     return users;
@@ -62,15 +57,7 @@ export const usersService = {
   async findById(id: string) {
     const user = await prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        createdAt: true
-      }
+      select: userSelect
     });
     return user;
   },
@@ -108,15 +95,7 @@ export const usersService = {
     const user = await prisma.user.update({
       where: { id },
       data: { ...data },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        isActive: true,
-        createdAt: true
-      }
+      select: userSelect
     });
 
     return { ok: true as const, user };
