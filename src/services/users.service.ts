@@ -47,7 +47,6 @@ export const usersService = {
     const users = await prisma.user.findMany({
       select: userSelect
     });
-
     return users;
   },
 
