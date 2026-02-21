@@ -10,7 +10,8 @@ const userSelect = {
   role: true,
   isActive: true,
   avatarUrl: true,
-  createdAt: true
+  createdAt: true,
+  pseudo: true
 } as const;
 
 
@@ -20,9 +21,13 @@ export const usersService = {
   //          Creer un user           //
   //----------------------------------//
   async create(data: CreateUserInput) {
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
-    if (existing) {
+    const existingEmail = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existingEmail) {
       return { ok: false as const, error: "EMAIL_ALREADY_USED" as const };
+    }
+    const existingPseudo = await prisma.user.findUnique({ where: { pseudo: data.pseudo } });
+    if (existingPseudo) {
+      return { ok: false as const, error: "PSEUDO_ALREADY_USED" as const };
     }
 
     const passwordHash = await bcrypt.hash(data.password, 10);
@@ -30,6 +35,7 @@ export const usersService = {
     const user = await prisma.user.create({
       data: {
         email: data.email,
+        pseudo: data.pseudo,
         password: passwordHash,
         firstName: data.firstName,
         lastName: data.lastName
