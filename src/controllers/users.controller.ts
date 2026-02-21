@@ -31,6 +31,17 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 //------------------------------------//
 //          Détail d'un user          //
 //------------------------------------//
+//USER
+export const getMe = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
+
+  const user = await usersService.findById(userId);
+  if (!user) return res.status(404).json({ error: "USER_NOT_FOUND" });
+
+  return res.status(200).json(user);
+});
+
+//ADMIN
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   const params = parseOr400 (userIdParamSchema, req.params, res)
   if (!params) return;

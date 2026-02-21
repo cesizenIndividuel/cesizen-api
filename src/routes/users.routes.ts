@@ -9,8 +9,11 @@ import { requireRole } from "../middlewares/requireRole.middleware";
 export const usersRoutes = Router();
 
 usersRoutes.post("/", requireAuth, requireRole("ADMIN"), usersController.createUser);
-usersRoutes.get("/", usersController.getUsers);
-usersRoutes.get("/:id", usersController.getUserById);
+
+usersRoutes.get("/me", requireAuth, usersController.getMe);
+usersRoutes.get("/", requireAuth, requireRole("ADMIN"), usersController.getUsers);
+usersRoutes.get("/:id", requireAuth, requireRole("ADMIN"), usersController.getUserById);
+
 usersRoutes.delete("/:id", usersController.deleteUser);
 usersRoutes.patch("/:id", usersController.updateUser);
 usersRoutes.patch("/:id/password", usersController.updateUserPassword);
