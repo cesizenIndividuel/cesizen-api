@@ -18,7 +18,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   //Verifier le token 
   try {
     const payload = verifyAccessToken(token);
-    (req as any).auth = payload; // { userId, role }
+    req.auth = payload; // { userId, role }
     return next();
   } catch {
     return res.status(401).json({ error: "UNAUTHORIZED", message: "Invalid or expired token" });
