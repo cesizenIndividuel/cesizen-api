@@ -1,42 +1,26 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-
-interface JwtPayload {
-  sub: string;
-  role: "USER" | "ADMIN";
-}
+import { verifyAccessToken } from "../utils/jwt";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  //Récupérer le header Authorization 
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "UNAUTHORIZED" });
+  //Extraire le token
+  const token =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length)
+      : null;
+
+  if (!token) {
+    return res.status(401).json({ error: "UNAUTHORIZED", message: "Missing token" });
   }
 
-  const token = authHeader.split(" ")[1];
-
+  //Verifier le token 
   try {
-    const secret = process.env.JWT_SECRET as string;
-    const decoded = jwt.verify(token, secret) as JwtPayload;
-
-    // On attache l'utilisateur au request
-    (req as any).user = {
-      id: decoded.sub,
-      role: decoded.role
-    };
-
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: "INVALID_TOKEN" });
+    const payload = verifyAccessToken(token);
+    (req as any).auth = payload; // { userId, role }
+    return next();
+  } catch {
+    return res.status(401).json({ error: "UNAUTHORIZED", message: "Invalid or expired token" });
   }
-}
-
-export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const user = (req as any).user;
-
-  if (!user || user.role !== "ADMIN") {
-    return res.status(403).json({ error: "FORBIDDEN" });
-  }
-
-  next();
 }
