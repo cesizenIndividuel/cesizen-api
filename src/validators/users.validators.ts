@@ -7,7 +7,9 @@ export const createUserSchema = z.object({
   password: CommonSchemas.passwordSchema,
   firstName: CommonSchemas.firstNameSchema.optional(),
   lastName: CommonSchemas.lastNameSchema.optional(),
-  pseudo: CommonSchemas.pseudoSchema
+  pseudo: CommonSchemas.pseudoSchema,
+  role: CommonSchemas.roleSchema.optional(),
+  isActive: z.boolean().optional() 
 });
 
 //Verifie l'Id d'un user

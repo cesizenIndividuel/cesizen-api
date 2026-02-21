@@ -38,7 +38,9 @@ export const usersService = {
         pseudo: data.pseudo,
         password: passwordHash,
         firstName: data.firstName,
-        lastName: data.lastName
+        lastName: data.lastName,
+        role: data.role ?? "USER", 
+        isActive: data.isActive ?? true, 
       },
       select: userSelect
     });
