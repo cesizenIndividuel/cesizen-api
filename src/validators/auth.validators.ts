@@ -1,6 +1,7 @@
 import { z } from "zod";
 import * as CommonSchemas from "./common.schemas";
 
+// schéma inscription 
 export const registerSchema = z.object({
   email: CommonSchemas.emailSchema,
   pseudo: CommonSchemas.pseudoSchema,
@@ -17,4 +18,12 @@ export const registerSchema = z.object({
   message: "Vous devez accepter les CGU"
 });
 
+//schéma inscription 
+export const loginSchema = z.object({
+  email: CommonSchemas.emailSchema,
+  password: CommonSchemas.passwordSchema
+});
+
+
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;

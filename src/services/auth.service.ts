@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma";
-import type { RegisterInput } from "../validators/auth.validators";
+import type { RegisterInput, LoginInput } from "../validators/auth.validators";
+import jwt, { SignOptions } from "jsonwebtoken";
 
 const userSelect = {
   id: true,
@@ -14,7 +15,16 @@ const userSelect = {
   createdAt: true
 } as const;
 
+function getEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) throw new Error(`MISSING_ENV_${name}`);
+  return v;
+}
+
 export const authService = {
+  //-------------------------------------//
+  //             S'inscrire              //
+  //-------------------------------------//
   async register(data: RegisterInput) {
     // 1) email unique
     const existingEmail = await prisma.user.findUnique({ where: { email: data.email } });
@@ -39,5 +49,45 @@ export const authService = {
     });
 
     return { ok: true as const, user };
+  },
+
+  //-------------------------------------//
+  //            Se connecter             //
+  //-------------------------------------//
+
+  async login(data: LoginInput) {
+    // Trouver le user
+    const user = await prisma.user.findUnique({
+      where: { email: data.email },
+      select: { id: true, password: true, role: true, isActive: true }
+    });
+
+    if (!user) {
+      return { ok: false as const, error: "INVALID_CREDENTIALS" as const };
+    }
+
+    if (!user.isActive) {
+      return { ok: false as const, error: "ACCOUNT_INACTIVE" as const };
+    }
+
+    // Vérifier le mot de passe
+    const okPassword = await bcrypt.compare(data.password, user.password);
+    if (!okPassword) {
+      return { ok: false as const, error: "INVALID_CREDENTIALS" as const };
+    }
+    // 3) Générer un token
+    const secret = getEnv("JWT_SECRET");
+
+    const options: SignOptions = {
+      expiresIn: (process.env.JWT_EXPIRES_IN ?? "30m") as SignOptions["expiresIn"]
+    };
+
+    const token = jwt.sign(
+      { sub: user.id, role: user.role },
+      secret,
+      options
+    );
+
+    return { ok: true as const, token };
   }
 };
