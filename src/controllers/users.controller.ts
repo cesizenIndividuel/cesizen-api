@@ -70,6 +70,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 //-------------------------------------//
 //            MAJ d'un user            //
 //-------------------------------------//
+//ADMIN
 export const updateUser = asyncHandler (async (req: Request, res: Response) => {
   // Valider id
   const params = parseOr400 (userIdParamSchema, req.params, res)
@@ -88,6 +89,25 @@ export const updateUser = asyncHandler (async (req: Request, res: Response) => {
   }
   return res.status(200).json(result.user);
 })
+
+//USER
+export const updateMe = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
+
+  const body = parseOr400(updateUserSchema, req.body, res);
+  if (!body) return;
+
+  const result = await usersService.updateById(userId, body);
+
+  if (!result.ok) {
+    if (result.error === "EMAIL_ALREADY_USED") {
+      return res.status(409).json({ error: result.error });
+    }
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.user);
+});
 
 //-------------------------------------//
 //            MAJ d'un mdp             //
