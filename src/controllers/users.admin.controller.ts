@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { deleteAvatarFile } from "../utils/file";
 import { asyncHandler, parseOr400 } from "../utils/http";
 import { createUserSchema, userIdParamSchema, updateUserSchema } from "../validators/users.validators";
 import { usersService } from "../services/users.service";
@@ -65,14 +66,17 @@ export const updateUser = asyncHandler (async (req: Request, res: Response) => {
 //-------------------------------------//
 //          Supprimer un user          //
 //-------------------------------------//
-//ADMIN
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const params = parseOr400 (userIdParamSchema, req.params, res)
+  const params = parseOr400(userIdParamSchema, req.params, res);
   if (!params) return;
 
   const result = await usersService.deleteById(params.id);
-  if (!result.ok){
-      return res.status(404).json({ error: "USER_NOT_FOUND" });
-  } 
+
+  if (!result.ok) {
+    return res.status(404).json({ error: "USER_NOT_FOUND" });
+  }
+
+  deleteAvatarFile(result.avatarUrl);
+
   return res.status(204).send();
-})
+});

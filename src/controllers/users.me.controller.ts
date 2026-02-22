@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
-import { asyncHandler, parseOr400 } from "../utils/http";
-import { updateUserSchema, changeMyPasswordSchema } from "../validators/users.validators";
-import { usersService } from "../services/users.service";
 import fs from "fs";
 import path from "path";
+import { asyncHandler, parseOr400 } from "../utils/http";
+import { deleteAvatarFile } from "../utils/file";
+import { updateUserSchema, changeMyPasswordSchema } from "../validators/users.validators";
+import { usersService } from "../services/users.service";
+
 
 //------------------------------------//
 //     Les détails de mon compte      //
@@ -74,22 +76,13 @@ export const updateMyAvatar = asyncHandler(async (req: Request, res: Response) =
   const result = await usersService.updateAvatar(userId, avatarUrl);
 
   if (!result.ok) {
-    // supprime le fichier si user inexistant
-    const uploadedPath = path.join(process.cwd(), "uploads", "users", req.file.filename);
-    if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
-
+    // si user inexistant, on supprime le fichier qu’on vient d’uploader
+    deleteAvatarFile(avatarUrl);
     return res.status(404).json({ error: result.error });
   }
 
   // suppression ancienne image
-  if (result.previousAvatarUrl) {
-    const oldFilename = result.previousAvatarUrl.replace("/uploads/users/", "");
-    const oldPath = path.join(process.cwd(), "uploads", "users", oldFilename);
-
-    if (fs.existsSync(oldPath)) {
-      fs.unlinkSync(oldPath);
-    }
-  }
+  deleteAvatarFile(result.previousAvatarUrl);
 
   return res.status(200).json(result.user);
 });
@@ -100,25 +93,10 @@ export const updateMyAvatar = asyncHandler(async (req: Request, res: Response) =
 export const deleteMe = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.auth!.userId;
 
-  const user = await usersService.findById(userId);
-  if (!user) {
-    return res.status(404).json({ error: "USER_NOT_FOUND" });
-  }
-
   const result = await usersService.deleteById(userId);
-  if (!result.ok) {
-    return res.status(404).json({ error: "USER_NOT_FOUND" });
-  }
+  if (!result.ok) return res.status(404).json({ error: "USER_NOT_FOUND" });
 
-  //Supprimer photo 
-  if (user.avatarUrl) {
-    const filename = user.avatarUrl.replace("/uploads/users/", "");
-    const filePath = path.join(process.cwd(), "uploads", "users", filename);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  }
+  deleteAvatarFile(result.avatarUrl);
 
   return res.status(204).send();
 });

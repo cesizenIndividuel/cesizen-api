@@ -74,11 +74,17 @@ export const usersService = {
   //------------------------------------//
   async deleteById(id: string) {
     const existing = await prisma.user.findUnique({ where: { id } });
+
     if (!existing) {
       return { ok: false as const };
     }
+
     await prisma.user.delete({ where: { id } });
-    return { ok: true as const };
+
+    return { 
+      ok: true as const,
+      avatarUrl: existing.avatarUrl 
+    };
   },
 
   //------------------------------------//
