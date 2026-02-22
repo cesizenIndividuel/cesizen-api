@@ -6,16 +6,18 @@ import { requireRole } from "../middlewares/requireRole.middleware";
 
 export const usersRoutes = Router();
 
-// ========== USER (mon compte) ==========//
-usersRoutes.get("/me", requireAuth, usersController.getMe);
-usersRoutes.patch("/me", requireAuth, usersController.updateMe);
-usersRoutes.patch("/me/password", requireAuth, usersController.updateMyPassword);
-usersRoutes.post("/me/avatar", requireAuth, uploadAvatar, usersController.updateMyAvatar);
-usersRoutes.delete("/me", requireAuth, usersController.deleteMe);
+usersRoutes.use(requireAuth);
 
-// ========== ADMIN (gestion des comptes) ==========//
-usersRoutes.post("/", requireAuth, requireRole("ADMIN"), usersController.createUser);
-usersRoutes.get("/", requireAuth, requireRole("ADMIN"), usersController.getUsers);
-usersRoutes.get("/:id", requireAuth, requireRole("ADMIN"), usersController.getUserById);
-usersRoutes.patch("/:id", requireAuth, requireRole("ADMIN"), usersController.updateUser);
-usersRoutes.delete("/:id", requireAuth, requireRole("ADMIN"), usersController.deleteUser);
+// ========== USER ==========//
+usersRoutes.get("/me", usersController.getMe);
+usersRoutes.patch("/me", usersController.updateMe);
+usersRoutes.patch("/me/password", usersController.updateMyPassword);
+usersRoutes.post("/me/avatar", uploadAvatar, usersController.updateMyAvatar);
+usersRoutes.delete("/me", usersController.deleteMe);
+
+// ========== ADMIN ==========//
+usersRoutes.post("/", requireRole("ADMIN"), usersController.createUser);
+usersRoutes.get("/", requireRole("ADMIN"), usersController.getUsers);
+usersRoutes.get("/:id", requireRole("ADMIN"), usersController.getUserById);
+usersRoutes.patch("/:id", requireRole("ADMIN"), usersController.updateUser);
+usersRoutes.delete("/:id", requireRole("ADMIN"), usersController.deleteUser);
