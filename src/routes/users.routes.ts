@@ -10,7 +10,7 @@ export const usersRoutes = Router();
 usersRoutes.get("/me", requireAuth, usersController.getMe);
 usersRoutes.patch("/me", requireAuth, usersController.updateMe);
 usersRoutes.patch("/me/password", requireAuth, usersController.updateMyPassword);
-//usersRoutes.post("/me/avatar", requireAuth, uploadAvatar, usersController.updateMyAvatar);
+usersRoutes.post("/me/avatar", requireAuth, uploadAvatar, usersController.updateMyAvatar);
 //usersRoutes.delete("/me", requireAuth, usersController.deleteMe);
 
 // ========== ADMIN (gestion des comptes) ==========//

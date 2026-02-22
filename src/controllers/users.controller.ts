@@ -134,27 +134,26 @@ export const updateMyPassword = asyncHandler(async (req: Request, res: Response)
 //-------------------------------------//
 //          MAJ de la photo            //
 //-------------------------------------//
-export const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
-  const params = parseOr400(userIdParamSchema, req.params, res);
-  if (!params) return;
+export const updateMyAvatar = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
 
-  //Verifie qu'un fichier a été envoyé
   if (!req.file) {
     return res.status(400).json({ error: "NO_FILE_UPLOADED" });
   }
 
-  //Creation de l'url de l'image
   const avatarUrl = `/uploads/users/${req.file.filename}`;
-  const result = await usersService.updateAvatar(params.id, avatarUrl);
 
-  // Si user inexistant -> on supprime le fichier uploadé
+  const result = await usersService.updateAvatar(userId, avatarUrl);
+
   if (!result.ok) {
+    // supprime le fichier si user inexistant
     const uploadedPath = path.join(process.cwd(), "uploads", "users", req.file.filename);
     if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
+
     return res.status(404).json({ error: result.error });
   }
 
-  // Suppression de l'ancienne photo
+  // suppression ancienne image
   if (result.previousAvatarUrl) {
     const oldFilename = result.previousAvatarUrl.replace("/uploads/users/", "");
     const oldPath = path.join(process.cwd(), "uploads", "users", oldFilename);
