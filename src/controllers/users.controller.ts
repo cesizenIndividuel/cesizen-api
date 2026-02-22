@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
-import { createUserSchema, userIdParamSchema, updateUserSchema, updatePasswordSchema } from "../validators/users.validators";
+import { createUserSchema, userIdParamSchema, updateUserSchema, updatePasswordSchema, changeMyPasswordSchema } from "../validators/users.validators";
 import { usersService } from "../services/users.service";
 import fs from "fs";
 import path from "path";
@@ -112,19 +112,24 @@ export const updateMe = asyncHandler(async (req: Request, res: Response) => {
 //-------------------------------------//
 //            MAJ d'un mdp             //
 //-------------------------------------//
-export const updateUserPassword = asyncHandler (async (req: Request, res: Response) => {
-  const params = parseOr400 (userIdParamSchema, req.params, res)
-  if (!params) return;
-  
-  const body = parseOr400(updatePasswordSchema, req.body, res);
+
+export const updateMyPassword = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
+
+  const body = parseOr400(changeMyPasswordSchema, req.body, res);
   if (!body) return;
-  
-  const result = await usersService.updatePassword(params.id, body);
+
+  const result = await usersService.changeMyPassword(userId, body);
+
   if (!result.ok) {
+    if (result.error === "INVALID_OLD_PASSWORD") {
+      return res.status(400).json({ error: result.error });
+    }
     return res.status(404).json({ error: result.error });
   }
+
   return res.status(204).send();
-})
+});
 
 //-------------------------------------//
 //          MAJ de la photo            //

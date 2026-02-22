@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma";
-import type { CreateUserInput, UpdateUserInput, UpdatePasswordInput } from "../validators/users.validators";
+import type { CreateUserInput, UpdateUserInput, UpdatePasswordInput, ChangeMyPasswordInput } from "../validators/users.validators";
 
 const userSelect = {
   id: true,
@@ -110,17 +110,26 @@ export const usersService = {
   //------------------------------------//
   //             MAJ du mdp             //
   //------------------------------------//
-  async updatePassword(id: string, data: UpdatePasswordInput) {
-    const existing = await prisma.user.findUnique({ where: { id } });
+  async changeMyPassword(userId: string, data: ChangeMyPasswordInput) {
+    const existing = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, password: true },
+    });
+
     if (!existing) {
       return { ok: false as const, error: "USER_NOT_FOUND" as const };
     }
 
-    const passwordHash = await bcrypt.hash(data.password, 10);
+    const okOld = await bcrypt.compare(data.oldPassword, existing.password);
+    if (!okOld) {
+      return { ok: false as const, error: "INVALID_OLD_PASSWORD" as const };
+    }
+
+    const passwordHash = await bcrypt.hash(data.newPassword, 10);
 
     await prisma.user.update({
-      where: { id },
-      data: { password: passwordHash }
+      where: { id: userId },
+      data: { password: passwordHash },
     });
 
     return { ok: true as const };
@@ -150,7 +159,5 @@ export const usersService = {
 
     return { ok: true as const, user, previousAvatarUrl: existing.avatarUrl };
   },
-
-
 
 };
