@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma";
-import type { CreateUserInput, UpdateUserInput, UpdatePasswordInput, ChangeMyPasswordInput } from "../validators/users.validators";
+import type { CreateUserInput, UpdateUserInput, ChangeMyPasswordInput } from "../validators/users.validators";
 
 const userSelect = {
   id: true,

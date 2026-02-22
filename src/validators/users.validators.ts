@@ -48,5 +48,4 @@ export const changeMyPasswordSchema = z
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
-export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;
 export type ChangeMyPasswordInput = z.infer<typeof changeMyPasswordSchema>;

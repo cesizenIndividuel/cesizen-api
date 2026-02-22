@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
-import { createUserSchema, userIdParamSchema, updateUserSchema, updatePasswordSchema, changeMyPasswordSchema } from "../validators/users.validators";
+import { createUserSchema, userIdParamSchema, updateUserSchema, changeMyPasswordSchema } from "../validators/users.validators";
 import { usersService } from "../services/users.service";
 import fs from "fs";
 import path from "path";
