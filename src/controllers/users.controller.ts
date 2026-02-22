@@ -56,6 +56,7 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 //-------------------------------------//
 //          Supprimer un user          //
 //-------------------------------------//
+//ADMIN
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   const params = parseOr400 (userIdParamSchema, req.params, res)
   if (!params) return;
@@ -66,6 +67,33 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   } 
   return res.status(204).send();
 })
+
+//USER
+export const deleteMe = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
+
+  const user = await usersService.findById(userId);
+  if (!user) {
+    return res.status(404).json({ error: "USER_NOT_FOUND" });
+  }
+
+  const result = await usersService.deleteById(userId);
+  if (!result.ok) {
+    return res.status(404).json({ error: "USER_NOT_FOUND" });
+  }
+
+  //Supprimer photo 
+  if (user.avatarUrl) {
+    const filename = user.avatarUrl.replace("/uploads/users/", "");
+    const filePath = path.join(process.cwd(), "uploads", "users", filename);
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+
+  return res.status(204).send();
+});
 
 //-------------------------------------//
 //            MAJ d'un user            //
