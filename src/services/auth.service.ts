@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma";
 import type { RegisterInput, LoginInput } from "../validators/auth.validators";
-import { signAccessToken } from "../utils/jwt";
+import * as jwtUtils from "../utils/jwt";
 
 const userSelect = {
   id: true,
@@ -56,21 +56,33 @@ export const authService = {
       select: { id: true, password: true, role: true, isActive: true }
     });
 
-    if (!user) {
-      return { ok: false as const, error: "INVALID_CREDENTIALS" as const };
-    }
+    if (!user) return { ok: false as const, error: "INVALID_CREDENTIALS" as const };
 
-    if (!user.isActive) {
-      return { ok: false as const, error: "ACCOUNT_INACTIVE" as const };
-    }
+    if (!user.isActive) return { ok: false as const, error: "ACCOUNT_INACTIVE" as const };
 
     // Vérifier le mot de passe
     const okPassword = await bcrypt.compare(data.password, user.password);
     if (!okPassword) {
       return { ok: false as const, error: "INVALID_CREDENTIALS" as const };
     }
-    // 3) Générer un token
-    const token = signAccessToken({ userId: user.id, role: user.role });
-    return { ok: true as const, token };
+
+    // access token
+    const accessToken = jwtUtils.signAccessToken({ userId: user.id, role: user.role });
+
+    // refresh token + stockage hash en BDD
+    const refreshToken = jwtUtils.generateRefreshToken();
+    const tokenHash = jwtUtils.hashRefreshToken(refreshToken);
+
+    await prisma.refreshToken.create({
+      data: {
+        tokenHash,
+        userId: user.id,
+        expiresAt: jwtUtils.getRefreshExpiresAt(),
+      },
+    });
+
+    const { password, ...safeUser } = user;
+
+    return { ok: true as const, user: safeUser, accessToken, refreshToken };
   }
 };

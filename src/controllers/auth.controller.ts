@@ -30,5 +30,17 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     return res.status(status).json({ error: result.error });
   }
 
-  return res.status(200).json({ token: result.token });
+  // refresh token dans un cookie sécurisé
+  res.cookie("refresh_token", result.refreshToken, {
+    httpOnly: true, //faille xss (injection JS)
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax", //faille CSRF (use cookie pour faire une action à ma place)
+    path: "/api/auth",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  return res.status(200).json({
+    accessToken: result.accessToken,
+    user: result.user,
+  });
 });
