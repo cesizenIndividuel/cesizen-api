@@ -1,6 +1,4 @@
 import { Request, Response } from "express";
-import fs from "fs";
-import path from "path";
 import { asyncHandler, parseOr400 } from "../utils/http";
 import { deleteAvatarFile } from "../utils/file";
 import { updateUserSchema, changeMyPasswordSchema } from "../validators/users.validators";

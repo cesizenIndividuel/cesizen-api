@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
 import { registerSchema, loginSchema } from "../validators/auth.validators";
-import { authService } from "../services/auth.service";
+import { authService } from "../services/auth.service";import { prisma } from "../db/prisma";
+import { hashRefreshToken, generateRefreshToken, getRefreshExpiresAt, signAccessToken } from "../utils/jwt";
 
-//Inscription
+//----------------------------------//
+//            Inscription           //
+//----------------------------------//
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const body = parseOr400(registerSchema, req.body, res);
   if (!body) return;
@@ -17,7 +20,9 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   return res.status(201).json(result.user);
 });
 
-//Connexion
+//----------------------------------//
+//            Connexion             //
+//----------------------------------//
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const body = parseOr400(loginSchema, req.body, res);
   if (!body) return;
@@ -43,4 +48,67 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     accessToken: result.accessToken,
     user: result.user,
   });
+});
+
+//----------------------------------//
+//           Refresh token          //
+//----------------------------------//
+export const refresh = asyncHandler(async (req: Request, res: Response) => {
+  const token = req.cookies?.refresh_token; //token stoché dans cookie
+
+  //si pas de cookie
+  if (!token) {
+    return res.status(401).json({ error: "UNAUTHORIZED" });
+  }
+
+  const tokenHash = hashRefreshToken(token); //on hash le token pour le comparer a la BDD
+
+  //on cherche le refresh token en BDD + user
+  const existing = await prisma.refreshToken.findUnique({
+    where: { tokenHash },
+    include: { user: true },
+  });
+
+  // token inconnu ou déjà révoqué
+  if (!existing || existing.revokedAt) {
+    return res.status(401).json({ error: "UNAUTHORIZED" });
+  }
+
+  // expiré
+  if (existing.expiresAt < new Date()) {
+    return res.status(401).json({ error: "REFRESH_EXPIRED" });
+  }
+
+  // Rotation : on révoque l’ancien refresh
+  await prisma.refreshToken.update({
+    where: { id: existing.id },
+    data: { revokedAt: new Date() },
+  });
+
+  // On crée un nouveau refresh token
+  const newRefresh = generateRefreshToken();
+  await prisma.refreshToken.create({
+    data: {
+      tokenHash: hashRefreshToken(newRefresh),
+      userId: existing.userId,
+      expiresAt: getRefreshExpiresAt(),
+    },
+  });
+
+  // Nouveau access token
+  const accessToken = signAccessToken({
+    userId: existing.userId,
+    role: existing.user.role,
+  });
+
+  // Nouveau cookie refresh dans un cookie
+  res.cookie("refresh_token", newRefresh, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/api/auth",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  return res.status(200).json({ accessToken });
 });
