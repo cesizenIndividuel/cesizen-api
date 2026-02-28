@@ -183,6 +183,14 @@ export const usersService = {
       data: { isActive },
     });
 
+    //Si on désactive : révoque toutes les sessions actives
+    if (!isActive) {
+      await prisma.refreshToken.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    }
+
     return {
       ok: true as const,
       user: {
