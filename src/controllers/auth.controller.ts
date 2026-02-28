@@ -112,3 +112,19 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 
   return res.status(200).json({ accessToken });
 });
+
+//----------------------------------//
+//              Logout              //
+//----------------------------------//
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.refresh_token;
+
+  await authService.logout(refreshToken);
+
+  //suppression du cookie coté navigateur
+  res.clearCookie("refresh_token", {
+    path: "/api/auth",
+  });
+
+  return res.status(204).send();
+});

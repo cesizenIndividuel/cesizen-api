@@ -84,5 +84,29 @@ export const authService = {
     const { password, ...safeUser } = user;
 
     return { ok: true as const, user: safeUser, accessToken, refreshToken };
-  }
+  },
+  //-------------------------------------//
+  //           Se déconnecter            //
+  //-------------------------------------//
+  async logout(refreshToken: string | undefined) {
+    if (!refreshToken) {
+      return { ok: true as const };
+    }
+
+    const tokenHash = jwtUtils.hashRefreshToken(refreshToken);
+    //On trouve le token hash dans la BDD et on met un revokedAt
+    await prisma.refreshToken.updateMany({
+      where: {
+        tokenHash,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+
+    return { ok: true as const };
+  },
+
+
 };
