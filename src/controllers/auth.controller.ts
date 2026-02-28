@@ -54,55 +54,17 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 //           Refresh token          //
 //----------------------------------//
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
-  const token = req.cookies?.refresh_token; //token stoché dans cookie
+  const token = req.cookies?.refresh_token;
 
-  //si pas de cookie
-  if (!token) {
-    return res.status(401).json({ error: "UNAUTHORIZED" });
+  const result = await authService.refresh(token);
+
+  if (!result.ok) {
+    const status = result.error === "REFRESH_EXPIRED" ? 401 : 401;
+    return res.status(status).json({ error: result.error });
   }
 
-  const tokenHash = hashRefreshToken(token); //on hash le token pour le comparer a la BDD
-
-  //on cherche le refresh token en BDD + user
-  const existing = await prisma.refreshToken.findUnique({
-    where: { tokenHash },
-    include: { user: true },
-  });
-
-  // token inconnu ou déjà révoqué
-  if (!existing || existing.revokedAt) {
-    return res.status(401).json({ error: "UNAUTHORIZED" });
-  }
-
-  // expiré
-  if (existing.expiresAt < new Date()) {
-    return res.status(401).json({ error: "REFRESH_EXPIRED" });
-  }
-
-  // Rotation : on révoque l’ancien refresh
-  await prisma.refreshToken.update({
-    where: { id: existing.id },
-    data: { revokedAt: new Date() },
-  });
-
-  // On crée un nouveau refresh token
-  const newRefresh = generateRefreshToken();
-  await prisma.refreshToken.create({
-    data: {
-      tokenHash: hashRefreshToken(newRefresh),
-      userId: existing.userId,
-      expiresAt: getRefreshExpiresAt(),
-    },
-  });
-
-  // Nouveau access token
-  const accessToken = signAccessToken({
-    userId: existing.userId,
-    role: existing.user.role,
-  });
-
-  // Nouveau cookie refresh dans un cookie
-  res.cookie("refresh_token", newRefresh, {
+  // On remet le nouveau refresh dans le cookie
+  res.cookie("refresh_token", result.refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -110,7 +72,9 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
-  return res.status(200).json({ accessToken });
+  return res.status(200).json({
+    accessToken: result.accessToken,
+  });
 });
 
 //----------------------------------//

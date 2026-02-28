@@ -48,7 +48,6 @@ export const authService = {
   //-------------------------------------//
   //            Se connecter             //
   //-------------------------------------//
-
   async login(data: LoginInput) {
     // Trouver le user
     const user = await prisma.user.findUnique({
@@ -85,6 +84,64 @@ export const authService = {
 
     return { ok: true as const, user: safeUser, accessToken, refreshToken };
   },
+
+  //-------------------------------------//
+  //           refresh token             //
+  //-------------------------------------//
+  async refresh(refreshToken: string | undefined) {
+    //si pas de cookie
+    if (!refreshToken) {
+      return { ok: false as const, error: "UNAUTHORIZED" as const };
+    }
+
+    //on hash le token pour le comparer à la BDD
+    const tokenHash = jwtUtils.hashRefreshToken(refreshToken);
+
+    //on cherche le refresh token en BDD + user
+    const existing = await prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    //token inconnu ou deja revoqué
+    if (!existing || existing.revokedAt) {
+      return { ok: false as const, error: "UNAUTHORIZED" as const };
+    }
+
+    //token expiré
+    if (existing.expiresAt < new Date()) {
+      return { ok: false as const, error: "REFRESH_EXPIRED" as const };
+    }
+
+    // Rotation : on révoque l'ancien token
+    await prisma.refreshToken.update({
+      where: { id: existing.id },
+      data: { revokedAt: new Date() },
+    });
+
+    //on crée un nouveau refresh token
+    const newRefresh = jwtUtils.generateRefreshToken();
+    await prisma.refreshToken.create({
+      data: {
+        tokenHash: jwtUtils.hashRefreshToken(newRefresh),
+        userId: existing.userId,
+        expiresAt: jwtUtils.getRefreshExpiresAt(),
+      },
+    });
+
+    //Nouveau access token
+    const accessToken = jwtUtils.signAccessToken({
+      userId: existing.userId,
+      role: existing.user.role,
+    });
+
+    return {
+      ok: true as const,
+      accessToken,
+      refreshToken: newRefresh,
+    };
+  },
+
   //-------------------------------------//
   //           Se déconnecter            //
   //-------------------------------------//
