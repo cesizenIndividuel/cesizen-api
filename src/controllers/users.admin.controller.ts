@@ -93,7 +93,12 @@ export const toggleUserStatus = asyncHandler(async (req: Request, res: Response)
   const result = await usersService.toggleUserStatus(params.id, body.isActive);
 
   if (!result.ok) {
-    return res.status(404).json({ error: result.error });
+    if (result.error === "USER_NOT_FOUND") {
+      return res.status(404).json({ error: result.error });
+    }
+    if (result.error === "CANNOT_DISABLE_ADMIN") {
+      return res.status(403).json({ error: result.error });
+    }
   }
 
   return res.status(200).json(result.user);

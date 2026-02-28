@@ -178,6 +178,10 @@ export const usersService = {
       return { ok: false as const, error: "USER_NOT_FOUND" as const };
     }
 
+    if (user.role === "ADMIN" && !isActive) {
+      return { ok: false as const, error: "CANNOT_DISABLE_ADMIN" as const };
+    }
+
     const updated = await prisma.user.update({
       where: { id },
       data: { isActive },
