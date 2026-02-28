@@ -46,6 +46,11 @@ export const changeMyPasswordSchema = z
     }
   });
 
+export const toggleUserStatusSchema = z
+.object({
+  isActive: z.boolean(),
+});
+
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type ChangeMyPasswordInput = z.infer<typeof changeMyPasswordSchema>;

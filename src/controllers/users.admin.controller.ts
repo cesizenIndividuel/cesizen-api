@@ -1,15 +1,14 @@
 import { Request, Response } from "express";
 import { deleteAvatarFile } from "../utils/file";
 import { asyncHandler, parseOr400 } from "../utils/http";
-import { createUserSchema, userIdParamSchema, updateUserSchema } from "../validators/users.validators";
-import { usersService } from "../services/users.service";
+import * as userValidators from "../validators/users.validators";import { usersService } from "../services/users.service";
 
 //----------------------------------//
 //          Creer un user           //
 //----------------------------------//
 export const createUser = asyncHandler (async (req: Request, res: Response) => {
   // Validation du body
-  const body = parseOr400 (createUserSchema, req.body, res)
+  const body = parseOr400 (userValidators.createUserSchema, req.body, res)
   if (!body) return;
 
   const result = await usersService.create(body);
@@ -31,7 +30,7 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 //          Détail d'un user          //
 //------------------------------------//
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
-  const params = parseOr400 (userIdParamSchema, req.params, res)
+  const params = parseOr400 (userValidators.userIdParamSchema, req.params, res)
   if (!params) return;
 
   const user = await usersService.findById(params.id);
@@ -46,11 +45,11 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 //-------------------------------------//
 export const updateUser = asyncHandler (async (req: Request, res: Response) => {
   // Valider id
-  const params = parseOr400 (userIdParamSchema, req.params, res)
+  const params = parseOr400 (userValidators.userIdParamSchema, req.params, res)
   if (!params) return;
 
   //Valider Body
-  const body = parseOr400 (updateUserSchema, req.body, res)
+  const body = parseOr400 (userValidators.updateUserSchema, req.body, res)
   if (!body) return;
 
   const result = await usersService.updateById(params.id, body);
@@ -67,7 +66,7 @@ export const updateUser = asyncHandler (async (req: Request, res: Response) => {
 //          Supprimer un user          //
 //-------------------------------------//
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const params = parseOr400(userIdParamSchema, req.params, res);
+  const params = parseOr400(userValidators.userIdParamSchema, req.params, res);
   if (!params) return;
 
   const result = await usersService.deleteById(params.id);
@@ -79,4 +78,23 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   deleteAvatarFile(result.avatarUrl);
 
   return res.status(204).send();
+});
+
+//-------------------------------------//
+//         Désactiver un user          //
+//-------------------------------------//
+export const toggleUserStatus = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(userValidators.userIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const body = parseOr400(userValidators.toggleUserStatusSchema, req.body, res);
+  if (!body) return;
+
+  const result = await usersService.toggleUserStatus(params.id, body.isActive);
+
+  if (!result.ok) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.user);
 });

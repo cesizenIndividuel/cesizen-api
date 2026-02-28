@@ -24,3 +24,4 @@ usersRoutes.get("/", requireRole("ADMIN"), admin.getUsers);
 usersRoutes.get("/:id", requireRole("ADMIN"), admin.getUserById);
 usersRoutes.patch("/:id", requireRole("ADMIN"), admin.updateUser);
 usersRoutes.delete("/:id", requireRole("ADMIN"), admin.deleteUser);
+usersRoutes.patch("/:id/status", requireRole("ADMIN"), admin.toggleUserStatus);

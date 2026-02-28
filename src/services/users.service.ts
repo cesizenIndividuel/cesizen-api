@@ -166,4 +166,32 @@ export const usersService = {
     return { ok: true as const, user, previousAvatarUrl: existing.avatarUrl };
   },
 
+  //------------------------------------//
+  //         IsActive compte            //
+  //------------------------------------//
+  async toggleUserStatus(id: string, isActive: boolean) {
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      return { ok: false as const, error: "USER_NOT_FOUND" as const };
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { isActive },
+    });
+
+    return {
+      ok: true as const,
+      user: {
+        id: updated.id,
+        email: updated.email,
+        isActive: updated.isActive,
+        role: updated.role,
+      },
+    };
+  }
+
 };
