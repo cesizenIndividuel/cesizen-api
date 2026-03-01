@@ -13,29 +13,53 @@ enum Role {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  firstName String?
-  lastName  String?
-  avatarUrl String?
-  role      Role     @default(USER)
-  isActive  Boolean  @default(true)
-  pseudo        String   @unique
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  firstName     String?
+  lastName      String?
+  avatarUrl     String?
+  role          Role      @default(USER)
+  isActive      Boolean   @default(true)
+  pseudo        String    @unique
   cguAcceptedAt DateTime?
+
+  refreshTokens RefreshToken[]
+  articles      Article[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  refreshTokens RefreshToken[]
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
-  tokenHash String   @unique
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
   revokedAt DateTime?
+
   @@index([userId])
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Article {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  content     String
+  excerpt     String?
+  status      ArticleStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
 }
