@@ -1,9 +1,10 @@
 import { z } from "zod";
+import * as CommonSchemas from "./common.schemas";
 
 export const listArticlesQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(50).default(10),
-  q: z.string().trim().min(1).optional(),
+  page: CommonSchemas.pageSchema,
+  limit: CommonSchemas.limitSchema,
+  q: CommonSchemas.searchQuerySchema,
 });
 
 export type ListArticlesQuery = z.infer<typeof listArticlesQuerySchema>;
