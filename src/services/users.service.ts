@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma";
-import type { CreateUserInput, UpdateUserInput, UpdatePasswordInput } from "../validators/users.validators";
+import type { CreateUserInput, UpdateUserInput, ChangeMyPasswordInput } from "../validators/users.validators";
 
 const userSelect = {
   id: true,
@@ -10,7 +10,8 @@ const userSelect = {
   role: true,
   isActive: true,
   avatarUrl: true,
-  createdAt: true
+  createdAt: true,
+  pseudo: true
 } as const;
 
 
@@ -20,9 +21,13 @@ export const usersService = {
   //          Creer un user           //
   //----------------------------------//
   async create(data: CreateUserInput) {
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
-    if (existing) {
+    const existingEmail = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existingEmail) {
       return { ok: false as const, error: "EMAIL_ALREADY_USED" as const };
+    }
+    const existingPseudo = await prisma.user.findUnique({ where: { pseudo: data.pseudo } });
+    if (existingPseudo) {
+      return { ok: false as const, error: "PSEUDO_ALREADY_USED" as const };
     }
 
     const passwordHash = await bcrypt.hash(data.password, 10);
@@ -30,9 +35,12 @@ export const usersService = {
     const user = await prisma.user.create({
       data: {
         email: data.email,
+        pseudo: data.pseudo,
         password: passwordHash,
         firstName: data.firstName,
-        lastName: data.lastName
+        lastName: data.lastName,
+        role: data.role ?? "USER", 
+        isActive: data.isActive ?? true, 
       },
       select: userSelect
     });
@@ -66,11 +74,17 @@ export const usersService = {
   //------------------------------------//
   async deleteById(id: string) {
     const existing = await prisma.user.findUnique({ where: { id } });
+
     if (!existing) {
       return { ok: false as const };
     }
+
     await prisma.user.delete({ where: { id } });
-    return { ok: true as const };
+
+    return { 
+      ok: true as const,
+      avatarUrl: existing.avatarUrl 
+    };
   },
 
   //------------------------------------//
@@ -102,17 +116,26 @@ export const usersService = {
   //------------------------------------//
   //             MAJ du mdp             //
   //------------------------------------//
-  async updatePassword(id: string, data: UpdatePasswordInput) {
-    const existing = await prisma.user.findUnique({ where: { id } });
+  async changeMyPassword(userId: string, data: ChangeMyPasswordInput) {
+    const existing = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, password: true },
+    });
+
     if (!existing) {
       return { ok: false as const, error: "USER_NOT_FOUND" as const };
     }
 
-    const passwordHash = await bcrypt.hash(data.password, 10);
+    const okOld = await bcrypt.compare(data.oldPassword, existing.password);
+    if (!okOld) {
+      return { ok: false as const, error: "INVALID_OLD_PASSWORD" as const };
+    }
+
+    const passwordHash = await bcrypt.hash(data.newPassword, 10);
 
     await prisma.user.update({
-      where: { id },
-      data: { password: passwordHash }
+      where: { id: userId },
+      data: { password: passwordHash },
     });
 
     return { ok: true as const };
@@ -143,6 +166,44 @@ export const usersService = {
     return { ok: true as const, user, previousAvatarUrl: existing.avatarUrl };
   },
 
+  //------------------------------------//
+  //         IsActive compte            //
+  //------------------------------------//
+  async toggleUserStatus(id: string, isActive: boolean) {
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
 
+    if (!user) {
+      return { ok: false as const, error: "USER_NOT_FOUND" as const };
+    }
+
+    if (user.role === "ADMIN" && !isActive) {
+      return { ok: false as const, error: "CANNOT_DISABLE_ADMIN" as const };
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { isActive },
+    });
+
+    //Si on désactive : révoque toutes les sessions actives
+    if (!isActive) {
+      await prisma.refreshToken.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    }
+
+    return {
+      ok: true as const,
+      user: {
+        id: updated.id,
+        email: updated.email,
+        isActive: updated.isActive,
+        role: updated.role,
+      },
+    };
+  }
 
 };

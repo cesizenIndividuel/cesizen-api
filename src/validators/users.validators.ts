@@ -1,48 +1,56 @@
 import { z } from "zod";
+import * as CommonSchemas from "./common.schemas";
 
-//Les règles
-const emailSchema = z.email("Email invalide").trim();
-const passwordSchema = z.string().min(8, "Mot de passe : 8 caractères minimum");
-const uuidSchema = z.uuid("id invalide (UUID attendu)");
-const firstNameSchema = z.string().min(1).max(50);
-const lastNameSchema = z.string().min(1).max(50);
-
-
-export const roleSchema = z.enum(["USER", "ADMIN"]);
-
-//Verifie la creation d'un user
+// Verifie la creation d'un user
 export const createUserSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-  firstName: firstNameSchema.optional(),
-  lastName: lastNameSchema.optional()
+  email: CommonSchemas.emailSchema,
+  password: CommonSchemas.passwordSchema,
+  firstName: CommonSchemas.firstNameSchema.optional(),
+  lastName: CommonSchemas.lastNameSchema.optional(),
+  pseudo: CommonSchemas.pseudoSchema,
+  role: CommonSchemas.roleSchema.optional(),
+  isActive: z.boolean().optional(),
 });
 
-//Verifie l'Id d'un user
+// Verifie l'Id d'un user
 export const userIdParamSchema = z.object({
-  id: uuidSchema
+  id: CommonSchemas.uuidSchema,
 });
 
-//Verifie la maj d'un user
-export const updateUserSchema = z.object({
-  email: emailSchema.optional(),
-  firstName: firstNameSchema.optional(),
-  lastName: lastNameSchema.optional(),
-}).refine(
-  (data) => Object.keys(data).length > 0,
-  {
-    message: "Au moins un champ doit être fourni"
-  }
-);
+// Verifie la maj d'un user
+export const updateUserSchema = z
+  .object({
+    email: CommonSchemas.emailSchema.optional(),
+    firstName: CommonSchemas.firstNameSchema.optional(),
+    lastName: CommonSchemas.lastNameSchema.optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Au moins un champ doit être fourni",
+  });
 
-//Verifie la MAJ du mdp
-export const updatePasswordSchema = z.object({
-  password: passwordSchema
+
+// Changer son mdp (route /me/password)
+export const changeMyPasswordSchema = z
+  .object({
+    oldPassword: CommonSchemas.passwordSchema,
+    newPassword: CommonSchemas.passwordSchema,
+    confirmNewPassword: CommonSchemas.passwordSchema,
+  })
+  .superRefine((data, ctx) => {
+    if (data.newPassword !== data.confirmNewPassword) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["confirmNewPassword"],
+        message: "Les mots de passe ne correspondent pas",
+      });
+    }
+  });
+
+export const toggleUserStatusSchema = z
+.object({
+  isActive: z.boolean(),
 });
-
-
-
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
-export type UpdatePasswordInput = z.infer<typeof updatePasswordSchema>;
+export type ChangeMyPasswordInput = z.infer<typeof changeMyPasswordSchema>;

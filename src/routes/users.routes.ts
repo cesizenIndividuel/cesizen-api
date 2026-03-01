@@ -1,16 +1,27 @@
 import { Router } from "express";
 import { uploadAvatar } from "../middlewares/upload.middleware";
-import * as usersController from "../controllers/users.controller";
+import { requireAuth } from "../middlewares/auth.middleware";
+import { requireRole } from "../middlewares/requireRole.middleware";
+import { multerErrorHandler } from "../middlewares/multerError.middleware";
+import * as me from "../controllers/users.me.controller";
+import * as admin from "../controllers/users.admin.controller";
 
 
 export const usersRoutes = Router();
 
-usersRoutes.post("/", usersController.createUser);
-usersRoutes.get("/", usersController.getUsers);
-usersRoutes.get("/:id", usersController.getUserById);
-usersRoutes.delete("/:id", usersController.deleteUser);
-usersRoutes.patch("/:id", usersController.updateUser);
-usersRoutes.patch("/:id/password", usersController.updateUserPassword);
-usersRoutes.post("/:id/avatar", uploadAvatar, usersController.updateUserAvatar
-);
+usersRoutes.use(requireAuth);
 
+// ========== USER ==========//
+usersRoutes.get("/me", me.getMe);
+usersRoutes.patch("/me", me.updateMe);
+usersRoutes.patch("/me/password", me.updateMyPassword);
+usersRoutes.post("/me/avatar", uploadAvatar, multerErrorHandler, me.updateMyAvatar);
+usersRoutes.delete("/me", me.deleteMe);
+
+// ========== ADMIN ==========//
+usersRoutes.post("/", requireRole("ADMIN"), admin.createUser);
+usersRoutes.get("/", requireRole("ADMIN"), admin.getUsers);
+usersRoutes.get("/:id", requireRole("ADMIN"), admin.getUserById);
+usersRoutes.patch("/:id", requireRole("ADMIN"), admin.updateUser);
+usersRoutes.delete("/:id", requireRole("ADMIN"), admin.deleteUser);
+usersRoutes.patch("/:id/status", requireRole("ADMIN"), admin.toggleUserStatus);
