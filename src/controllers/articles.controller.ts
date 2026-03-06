@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
-import { listArticlesQuerySchema } from "../validators/articles.validators";
+import { listArticlesQuerySchema, articleSlugParamSchema } from "../validators/articles.validators";
 import { articlesService } from "../services/articles.service";
 
 //----------------------------------//
@@ -18,4 +18,20 @@ export const listPublicArticles = asyncHandler(async (req: Request, res: Respons
     limit: query.limit,
     total: result.total,
   });
+});
+
+//----------------------------------//
+//     Détail public par slug       //
+//----------------------------------//
+export const getPublicArticle = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(articleSlugParamSchema, req.params, res);
+  if (!params) return;
+
+  const result = await articlesService.getPublicBySlug(params.slug);
+
+  if (!result.ok) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.article);
 });

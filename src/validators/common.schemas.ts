@@ -17,7 +17,6 @@ export const pseudoSchema = z
 export const roleSchema = z.enum(["USER", "ADMIN"]);
 
 //Les articles 
-
 export const pageSchema = z
   .coerce.number()
   .int()
@@ -36,3 +35,10 @@ export const searchQuerySchema = z
   .trim()
   .min(1)
   .optional();
+
+export const slugParamSchema = z
+  .object({slug: z
+    .string()
+    .trim()
+    .min(1),
+});

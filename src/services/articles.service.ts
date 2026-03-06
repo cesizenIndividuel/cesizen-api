@@ -48,4 +48,34 @@ export const articlesService = {
 
     return { ok: true as const, items, total };
   },
+
+  //-------------------------------------//
+  //      Détail public par slug         //
+  //-------------------------------------//
+  async getPublicBySlug(slug: string) {
+    const article = await prisma.article.findFirst({
+      where: {
+        slug,
+        status: "PUBLISHED",
+        deletedAt: null,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            pseudo: true,
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!article) return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
+
+    return { ok: true as const, article };
+  },
+
 };
