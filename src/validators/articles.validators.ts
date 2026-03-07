@@ -18,6 +18,7 @@ export const createArticleSchema = z.object({
   title: z.string().trim().min(3).max(150),
   content: z.string().trim().min(20),
   excerpt: z.string().trim().max(300).optional(),
+  categoryIds: z.array(CommonSchemas.uuidSchema).optional()
 });
 
 //id article

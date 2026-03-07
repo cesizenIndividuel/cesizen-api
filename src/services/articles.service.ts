@@ -12,6 +12,7 @@ const publicAuthorSelect = {
   role: true,
 } satisfies Prisma.UserSelect; //verifie la validité du select
 
+//Recupere un liste paginée et le nombre totale d'articles
 async function findPagedArticles(
   where: Prisma.ArticleWhereInput,
   page: number,
@@ -34,6 +35,39 @@ async function findPagedArticles(
 
   return { items, total };
 }
+
+//Verfie les catégories
+async function ensureCategoriesExist(categoryIds: string[]) {
+  const categories = await prisma.category.findMany({
+    where: { id: { in: categoryIds } },
+    select: { id: true },
+  });
+
+  return categories.length === categoryIds.length;
+}
+
+//Générer un slug uniquement 
+async function buildUniqueArticleSlug(title: string, currentId?: string) {
+  const baseSlug = slugify(title);
+  let slug = baseSlug;
+  let suffix = 2;
+
+  while (
+    await prisma.article.findFirst({
+      where: {
+        slug,
+        ...(currentId ? { NOT: { id: currentId } } : {}),
+      },
+    })
+  ) {
+    slug = `${baseSlug}-${suffix}`;
+    suffix++;
+  }
+
+  return slug;
+}
+
+
 
 export const articlesService = {
   //-------------------------------------//
@@ -91,26 +125,35 @@ export const articlesService = {
   //         Créer un article            //
   //-------------------------------------//
   async create(data: articlesValidators.CreateArticleInput, authorId: string) {
-    const baseSlug = slugify(data.title); 
+    const slug = await buildUniqueArticleSlug(data.title);
+    
+    const { categoryIds, ...articleData } = data;
 
-    let slug = baseSlug;
-    let suffix = 2;
-
-    while (await prisma.article.findUnique({ where: { slug } })) {
-      slug = `${baseSlug}-${suffix}`;
-      suffix++;
+    if (categoryIds) {
+      const categoriesExist = await ensureCategoriesExist(categoryIds);
+      if (!categoriesExist) {
+        return { ok: false as const, error: "CATEGORY_NOT_FOUND" as const };
+      }
     }
 
     const article = await prisma.article.create({
       data: {
-        title: data.title,
+        ...articleData,
         slug,
-        content: data.content,
-        excerpt: data.excerpt,
         authorId,
-        status: ArticleStatus.DRAFT
+        status: ArticleStatus.DRAFT,
+        ...(categoryIds && {
+          categories: {
+            connect: categoryIds.map(id => ({ id }))
+          }
+        })
+      },
+      include: {
+        author: { select: publicAuthorSelect },
+        categories: true
       }
     });
+
     return { ok: true as const, article };
   },
 
@@ -133,9 +176,8 @@ export const articlesService = {
         publishedAt: new Date(),
       },
       include: {
-        author: {
-          select: publicAuthorSelect
-        },
+        author: {select: publicAuthorSelect},
+        categories: true,
       },
     });
     return { ok: true as const, article };
@@ -163,9 +205,8 @@ export const articlesService = {
         deletedAt: null,
       },
       include: {
-        author: {
-          select: publicAuthorSelect,
-        },
+        author: {select: publicAuthorSelect},
+        categories: true,
       },
     });
 
@@ -185,26 +226,15 @@ export const articlesService = {
     let slug = existing.slug;
     //Changement du titre => maj du slug 
     if (data.title && data.title !== existing.title) {
-      const baseSlug = slugify(data.title);
-      slug = baseSlug;
-      let suffix = 2;
-
-      while (await prisma.article.findFirst({ where: { slug, NOT: { id } } })) {
-        slug = `${baseSlug}-${suffix}`;
-        suffix++;
-      }
+      slug = await buildUniqueArticleSlug(data.title, id);
     }
 
     //Separation des catégories
     const { categoryIds, ...articleData } = data;
 
     if (categoryIds) {
-      const categories = await prisma.category.findMany({
-        where: { id: { in: categoryIds } },
-        select: { id: true },
-      });
-
-      if (categories.length !== categoryIds.length) {
+      const categoriesExist = await ensureCategoriesExist(categoryIds);
+      if (!categoriesExist) {
         return { ok: false as const, error: "CATEGORY_NOT_FOUND" as const };
       }
     }
@@ -311,9 +341,8 @@ export const articlesService = {
       where: { id },
       data: { imageUrl },
       include: {
-        author: {
-          select: publicAuthorSelect,
-        },
+        author: {select: publicAuthorSelect},
+        categories: true,
       },
     });
 
