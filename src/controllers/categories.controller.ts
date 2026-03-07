@@ -1,0 +1,20 @@
+import { Request, Response } from "express";
+import { asyncHandler, parseOr400 } from "../utils/http";
+import * as categoriesValidators from "../validators/categories.validators";
+import { categoriesService } from "../services/categories.service";
+
+//----------------------------------//
+//       Créer une catégorie        //
+//----------------------------------//
+export const createCategory = asyncHandler(async (req: Request, res: Response) => {
+  const body = parseOr400(categoriesValidators.createCategorySchema, req.body, res);
+  if (!body) return;
+
+  const result = await categoriesService.create(body);
+
+  if (!result.ok) {
+    return res.status(409).json({ error: result.error });
+  }
+
+  return res.status(201).json(result.category);
+});
