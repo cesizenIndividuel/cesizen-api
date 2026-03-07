@@ -6,6 +6,7 @@ export const listArticlesQuerySchema = z.object({
   page: CommonSchemas.pageSchema,
   limit: CommonSchemas.limitSchema,
   q: CommonSchemas.searchQuerySchema,
+  category: z.string().trim().min(1).optional(),
 });
 
 //slug article

@@ -74,28 +74,27 @@ export const articlesService = {
   //        Lister les articles          //
   //-------------------------------------//
   async listPublic(query: articlesValidators.ListArticlesQuery) {
-    const { page, limit, q } = query;
+    const { page, limit, q, category } = query;
 
-    //Filtre : articles publiés sans deleteAt, avec recherche
     const where: Prisma.ArticleWhereInput = {
       status: ArticleStatus.PUBLISHED,
       deletedAt: null,
-      ...(q
-        ? {
-            OR: [
-              { title: { contains: q, mode: "insensitive" } }, 
-              { content: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      ...(q ? {
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { content: { contains: q, mode: "insensitive" } }
+        ]
+      } : {}),
+      ...(category ? {
+        categories: {
+          some: { slug: category }
+        }
+      } : {})
     };
-    //Recuperer les articles de la page + nbr totale des articles
-    const { items, total } = await findPagedArticles(
-      where,
-      page,
-      limit,
-      { publishedAt: "desc" }
-    );
+
+    const { items, total } = await findPagedArticles(where, page, limit, {
+      publishedAt: "desc"
+    });
 
     return { ok: true as const, items, total };
   },
