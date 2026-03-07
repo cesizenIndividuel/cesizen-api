@@ -1,16 +1,7 @@
 import { prisma } from "../db/prisma";
 import type * as categoriesValidators from "../validators/categories.validators";
+import { slugify } from "../utils/slug";
 
-function slugify(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
 
 export const categoriesService = {
   //-------------------------------------//
@@ -86,14 +77,7 @@ export const categoriesService = {
       slug = baseSlug;
       let suffix = 2;
 
-      while (
-        await prisma.category.findFirst({
-          where: {
-            slug,
-            NOT: { id },
-          },
-        })
-      ) {
+      while (await prisma.category.findFirst({where: {slug, NOT: { id } }})) {
         slug = `${baseSlug}-${suffix}`;
         suffix++;
       }
@@ -110,7 +94,7 @@ export const categoriesService = {
     return { ok: true as const, category };
   },
 
-    //-------------------------------------//
+  //-------------------------------------//
   //      Supprimer une catégorie        //
   //-------------------------------------//
   async deleteById(id: string) {

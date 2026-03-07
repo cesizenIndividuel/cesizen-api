@@ -1,6 +1,7 @@
 import { prisma } from "../db/prisma";
 import type * as articlesValidators from "../validators/articles.validators";
 import { ArticleStatus, Prisma } from "@prisma/client";
+import { slugify } from "../utils/slug";
 
 const publicAuthorSelect = {
   id: true,
@@ -10,17 +11,6 @@ const publicAuthorSelect = {
   avatarUrl: true,
   role: true,
 } satisfies Prisma.UserSelect; //verifie la validité du select
-
-function slugify(value: string): string {
-  return value
-    .normalize("NFD")                 // é => e + accent
-    .replace(/[\u0300-\u036f]/g, "")  // é => e
-    .toLowerCase()                    // HelLo => hello
-    .trim()                           // Supprime les espaces
-    .replace(/[^a-z0-9\s-]/g, "")     // Supprime caractères spéciaux 
-    .replace(/\s+/g, "-")             // " " => -
-    .replace(/-+/g, "-");             // "    " => -
-}
 
 async function findPagedArticles(
   where: Prisma.ArticleWhereInput,
