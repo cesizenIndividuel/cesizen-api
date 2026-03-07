@@ -109,7 +109,32 @@ export const articlesService = {
       }
     });
     return { ok: true as const, article };
-  }
+  },
 
+  //-------------------------------------//
+  //         Publier un article          //
+  //-------------------------------------//
+  async publishById(id: string) {
+    const existing = await prisma.article.findUnique({
+      where: { id },
+    });
 
+    if (!existing || existing.deletedAt) {
+      return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
+    }
+
+    const article = await prisma.article.update({
+      where: { id },
+      data: {
+        status: ArticleStatus.PUBLISHED,
+        publishedAt: new Date(),
+      },
+      include: {
+        author: {
+          select: publicAuthorSelect
+        },
+      },
+    });
+    return { ok: true as const, article };
+  },
 };

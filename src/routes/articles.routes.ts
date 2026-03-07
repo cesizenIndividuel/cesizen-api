@@ -6,5 +6,6 @@ import { requireRole } from "../middlewares/requireRole.middleware";
 export const articlesRoutes = Router();
 
 articlesRoutes.get("/", articlesController.listPublicArticles);
-articlesRoutes.get("/:slug", articlesController.getPublicArticle);
 articlesRoutes.post("/", requireAuth, requireRole("ADMIN"), articlesController.createArticle);
+articlesRoutes.patch("/:id/publish", requireAuth, requireRole("ADMIN"), articlesController.publishArticle);
+articlesRoutes.get("/:slug", articlesController.getPublicArticle);

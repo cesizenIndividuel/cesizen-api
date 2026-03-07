@@ -8,7 +8,7 @@ export const listArticlesQuerySchema = z.object({
   q: CommonSchemas.searchQuerySchema,
 });
 
-//Détail article
+//slug article
 export const articleSlugParamSchema = z.object({
   slug: CommonSchemas.slugSchema,
 });
@@ -20,9 +20,16 @@ export const createArticleSchema = z.object({
   excerpt: z.string().trim().max(300).optional(),
 });
 
-
+//id article
+export const articleIdParamSchema = z.object({
+  id: CommonSchemas.uuidSchema,
+});
 
 
 export type ListArticlesQuery = z.infer<typeof listArticlesQuerySchema>;
 export type ArticleSlugParam = z.infer<typeof articleSlugParamSchema>;
 export type CreateArticleInput = z.infer<typeof createArticleSchema>;
+export type ArticleIdParam = z.infer<typeof articleIdParamSchema>;
+
+
+

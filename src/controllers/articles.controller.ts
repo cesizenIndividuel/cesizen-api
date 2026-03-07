@@ -1,13 +1,12 @@
 import { Request, Response } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
-import { listArticlesQuerySchema, articleSlugParamSchema, createArticleSchema  } from "../validators/articles.validators";
-import { articlesService } from "../services/articles.service";
+import * as articlesValidators from "../validators/articles.validators";import { articlesService } from "../services/articles.service";
 
 //----------------------------------//
 //         Liste publique           //
 //----------------------------------//
 export const listPublicArticles = asyncHandler(async (req: Request, res: Response) => {
-  const query = parseOr400(listArticlesQuerySchema, req.query, res);
+  const query = parseOr400(articlesValidators.listArticlesQuerySchema, req.query, res);
   if (!query) return;
 
   const result = await articlesService.listPublic(query);
@@ -24,7 +23,7 @@ export const listPublicArticles = asyncHandler(async (req: Request, res: Respons
 //     Détail public par slug       //
 //----------------------------------//
 export const getPublicArticle = asyncHandler(async (req: Request, res: Response) => {
-  const params = parseOr400(articleSlugParamSchema, req.params, res);
+  const params = parseOr400(articlesValidators.articleSlugParamSchema, req.params, res);
   if (!params) return;
 
   const result = await articlesService.getPublicBySlug(params.slug);
@@ -40,7 +39,7 @@ export const getPublicArticle = asyncHandler(async (req: Request, res: Response)
 //        Création article          //
 //----------------------------------//
 export const createArticle = asyncHandler(async (req: Request, res: Response) => {
-  const body = parseOr400(createArticleSchema, req.body, res);
+  const body = parseOr400(articlesValidators.createArticleSchema, req.body, res);
   if (!body) return;
 
   const auth = req.auth as { userId: string; role: "USER" | "ADMIN" };
@@ -48,4 +47,20 @@ export const createArticle = asyncHandler(async (req: Request, res: Response) =>
   const result = await articlesService.create(body, auth.userId);
 
   return res.status(201).json(result.article);
+});
+
+//----------------------------------//
+//        Publier article           //
+//----------------------------------//
+export const publishArticle = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(articlesValidators.articleIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const result = await articlesService.publishById(params.id);
+
+  if (!result.ok) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.article);
 });
