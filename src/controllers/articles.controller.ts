@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
 import * as articlesValidators from "../validators/articles.validators";import { articlesService } from "../services/articles.service";
+import { deleteUploadedFile } from "../utils/file";
 
 //----------------------------------//
 //         Liste publique           //
@@ -101,6 +102,31 @@ export const updateArticle = asyncHandler(async (req: Request, res: Response) =>
   if (!result.ok) {
     return res.status(404).json({ error: result.error });
   }
+
+  return res.status(200).json(result.article);
+});
+
+//----------------------------------//
+//       MAJ image article          //
+//----------------------------------//
+export const updateArticleImage = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(articlesValidators.articleIdParamSchema, req.params, res);
+  if (!params) return;
+
+  if (!req.file) {
+    return res.status(400).json({ error: "NO_FILE_UPLOADED" });
+  }
+
+  const imageUrl = `/uploads/articles/${req.file.filename}`;
+
+  const result = await articlesService.updateImage(params.id, imageUrl);
+
+  if (!result.ok) {
+    deleteUploadedFile(imageUrl);
+    return res.status(404).json({ error: result.error });
+  }
+
+  deleteUploadedFile(result.previousImageUrl);
 
   return res.status(200).json(result.article);
 });

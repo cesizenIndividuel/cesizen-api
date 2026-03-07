@@ -1,11 +1,10 @@
 import fs from "fs";
 import path from "path";
 
-export function deleteAvatarFile(avatarUrl?: string | null) {
-  if (!avatarUrl) return;
+export function deleteUploadedFile(fileUrl?: string | null) {
+  if (!fileUrl) return;
 
-  const filename = avatarUrl.replace("/uploads/users/", "");
-  const filePath = path.join(process.cwd(), "uploads", "users", filename);
+  const filePath = path.join(process.cwd(), fileUrl.replace(/^\/+/, ""));
 
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);

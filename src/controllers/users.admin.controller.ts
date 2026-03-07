@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { deleteAvatarFile } from "../utils/file";
+import { deleteUploadedFile } from "../utils/file";
 import { asyncHandler, parseOr400 } from "../utils/http";
 import * as userValidators from "../validators/users.validators";import { usersService } from "../services/users.service";
 
@@ -75,7 +75,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
     return res.status(404).json({ error: "USER_NOT_FOUND" });
   }
 
-  deleteAvatarFile(result.avatarUrl);
+  deleteUploadedFile(result.avatarUrl);
 
   return res.status(204).send();
 });

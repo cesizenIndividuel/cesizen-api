@@ -292,4 +292,34 @@ export const articlesService = {
 
     return { ok: true as const, items, total };
   },
+
+  //-------------------------------------//
+  //      MAJ de l'image article         //
+  //-------------------------------------//
+  async updateImage(id: string, imageUrl: string) {
+    const existing = await prisma.article.findUnique({
+      where: { id },
+    });
+
+    if (!existing || existing.deletedAt) {
+      return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
+    }
+
+    const article = await prisma.article.update({
+      where: { id },
+      data: { imageUrl },
+      include: {
+        author: {
+          select: publicAuthorSelect,
+        },
+      },
+    });
+
+    return {
+      ok: true as const,
+      article,
+      previousImageUrl: existing.imageUrl,
+    };
+  },
+
 };

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
-import { deleteAvatarFile } from "../utils/file";
+import { deleteUploadedFile } from "../utils/file";
 import { updateUserSchema, changeMyPasswordSchema } from "../validators/users.validators";
 import { usersService } from "../services/users.service";
 
@@ -75,12 +75,12 @@ export const updateMyAvatar = asyncHandler(async (req: Request, res: Response) =
 
   if (!result.ok) {
     // si user inexistant, on supprime le fichier qu’on vient d’uploader
-    deleteAvatarFile(avatarUrl);
+    deleteUploadedFile(avatarUrl);
     return res.status(404).json({ error: result.error });
   }
 
   // suppression ancienne image
-  deleteAvatarFile(result.previousAvatarUrl);
+  deleteUploadedFile(result.previousAvatarUrl);
 
   return res.status(200).json(result.user);
 });
@@ -94,7 +94,7 @@ export const deleteMe = asyncHandler(async (req: Request, res: Response) => {
   const result = await usersService.deleteById(userId);
   if (!result.ok) return res.status(404).json({ error: "USER_NOT_FOUND" });
 
-  deleteAvatarFile(result.avatarUrl);
+  deleteUploadedFile(result.avatarUrl);
 
   return res.status(204).send();
 });
