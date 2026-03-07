@@ -9,4 +9,5 @@ articlesRoutes.get("/", articlesController.listPublicArticles);
 articlesRoutes.post("/", requireAuth, requireRole("ADMIN"), articlesController.createArticle);
 articlesRoutes.patch("/:id/publish", requireAuth, requireRole("ADMIN"), articlesController.publishArticle);
 articlesRoutes.patch("/:id", requireAuth, requireRole("ADMIN"), articlesController.updateArticle);
+articlesRoutes.delete("/:id", requireAuth, requireRole("ADMIN"), articlesController.deleteArticle);
 articlesRoutes.get("/:slug", articlesController.getPublicArticle);

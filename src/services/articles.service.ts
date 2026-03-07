@@ -177,5 +177,26 @@ export const articlesService = {
     return { ok: true as const, article };
   },
 
+    //-------------------------------------//
+  //        Supprimer un article         //
+  //-------------------------------------//
+  async deleteById(id: string) {
+    const existing = await prisma.article.findUnique({
+      where: { id },
+    });
+
+    if (!existing || existing.deletedAt) {
+      return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
+    }
+
+    await prisma.article.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    return { ok: true as const };
+  },
 
 };

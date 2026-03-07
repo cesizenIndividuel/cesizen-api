@@ -83,3 +83,19 @@ export const updateArticle = asyncHandler(async (req: Request, res: Response) =>
 
   return res.status(200).json(result.article);
 });
+
+//----------------------------------//
+//       Supprimer article          //
+//----------------------------------//
+export const deleteArticle = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(articlesValidators.articleIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const result = await articlesService.deleteById(params.id);
+
+  if (!result.ok) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(204).send();
+});
