@@ -54,6 +54,7 @@ model Article {
   slug        String        @unique
   content     String
   excerpt     String?
+  imageUrl    String?
   status      ArticleStatus @default(DRAFT)
   publishedAt DateTime?
   createdAt   DateTime      @default(now())
