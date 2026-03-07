@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+//Les users
 export const emailSchema = z.email("Email invalide").trim();
 export const passwordSchema = z.string().min(8, "Mot de passe : 8 caractères minimum");
 export const uuidSchema = z.uuid("id invalide (UUID attendu)");
@@ -14,3 +15,28 @@ export const pseudoSchema = z
   .trim();
 
 export const roleSchema = z.enum(["USER", "ADMIN"]);
+
+//Les articles 
+export const pageSchema = z
+  .coerce.number()
+  .int()
+  .min(1)
+  .default(1);
+
+export const limitSchema = z
+  .coerce.number() //string en int
+  .int() //nombre entier
+  .min(1)
+  .max(50)
+  .default(10);
+
+export const searchQuerySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .optional();
+
+export const slugSchema = z
+  .string()
+  .trim()
+  .min(1);
