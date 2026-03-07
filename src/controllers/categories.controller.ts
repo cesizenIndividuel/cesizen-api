@@ -26,3 +26,25 @@ export const getCategories = asyncHandler(async (_req: Request, res: Response) =
   const categories = await categoriesService.findAll();
   return res.status(200).json(categories);
 });
+
+//----------------------------------//
+//      Modifier une catégorie      //
+//----------------------------------//
+export const updateCategory = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(categoriesValidators.categoryIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const body = parseOr400(categoriesValidators.updateCategorySchema, req.body, res);
+  if (!body) return;
+
+  const result = await categoriesService.updateById(params.id, body);
+
+  if (!result.ok) {
+    if (result.error === "CATEGORY_NAME_ALREADY_USED") {
+      return res.status(409).json({ error: result.error });
+    }
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.category);
+});

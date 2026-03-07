@@ -56,6 +56,60 @@ export const categoriesService = {
     return categories;
   },
 
+  //-------------------------------------//
+  //       Modifier une catégorie        //
+  //-------------------------------------//
+  async updateById(id: string, data: categoriesValidators.UpdateCategoryInput) {
+    const existing = await prisma.category.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return { ok: false as const, error: "CATEGORY_NOT_FOUND" as const };
+    }
+
+    let slug = existing.slug;
+
+    if (data.name && data.name !== existing.name) {
+      const nameUsed = await prisma.category.findFirst({
+        where: {
+          name: data.name,
+          NOT: { id },
+        },
+      });
+
+      if (nameUsed) {
+        return { ok: false as const, error: "CATEGORY_NAME_ALREADY_USED" as const };
+      }
+
+      const baseSlug = slugify(data.name);
+      slug = baseSlug;
+      let suffix = 2;
+
+      while (
+        await prisma.category.findFirst({
+          where: {
+            slug,
+            NOT: { id },
+          },
+        })
+      ) {
+        slug = `${baseSlug}-${suffix}`;
+        suffix++;
+      }
+    }
+
+    const category = await prisma.category.update({
+      where: { id },
+      data: {
+        ...data,
+        slug,
+      },
+    });
+
+    return { ok: true as const, category };
+  },
+
 
 
 };
