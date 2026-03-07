@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   //Récupérer le header Authorization 
-  console.log("[AUTH] has Authorization header?", !!req.headers.authorization);
   const authHeader = req.headers.authorization;
 
   //Extraire le token
@@ -18,9 +17,6 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
   //Verifier le token 
   try {
-    const decoded = jwt.decode(token) as any;
-    console.log("[AUTH] exp =", decoded?.exp, "now =", Math.floor(Date.now() / 1000));
-
     const payload = verifyAccessToken(token);
     req.auth = payload; // { userId, role }
     return next();
