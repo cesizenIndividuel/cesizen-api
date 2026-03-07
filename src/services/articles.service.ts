@@ -1,5 +1,15 @@
 import { prisma } from "../db/prisma";
-import type * as articlesValidators from "../validators/articles.validators";import { ArticleStatus, Prisma } from "@prisma/client";
+import type * as articlesValidators from "../validators/articles.validators";
+import { ArticleStatus, Prisma } from "@prisma/client";
+
+const publicAuthorSelect = {
+  id: true,
+  pseudo: true,
+  firstName: true,
+  lastName: true,
+  avatarUrl: true,
+  role: true,
+} satisfies Prisma.UserSelect; //verifie la validité du select
 
 function slugify(value: string): string {
   return value
@@ -12,14 +22,29 @@ function slugify(value: string): string {
     .replace(/-+/g, "-");             // "    " => -
 }
 
-const publicAuthorSelect = {
-  id: true,
-  pseudo: true,
-  firstName: true,
-  lastName: true,
-  avatarUrl: true,
-  role: true,
-} satisfies Prisma.UserSelect; //verifie la validité du select
+async function findPagedArticles(
+  where: Prisma.ArticleWhereInput,
+  page: number,
+  limit: number,
+  orderBy: Prisma.ArticleOrderByWithRelationInput
+) {
+  const [items, total] = await Promise.all([
+    prisma.article.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        author: {
+          select: publicAuthorSelect,
+        },
+      },
+    }),
+    prisma.article.count({ where }),
+  ]);
+
+  return { items, total };
+}
 
 export const articlesService = {
   //-------------------------------------//
@@ -42,20 +67,12 @@ export const articlesService = {
         : {}),
     };
     //Recuperer les articles de la page + nbr totale des articles
-    const [items, total] = await Promise.all([
-      prisma.article.findMany({
-        where,
-        orderBy: { publishedAt: "desc" },
-        skip: (page - 1) * limit,
-        take: limit,
-        include: {
-          author: {
-            select: publicAuthorSelect
-          },
-        },
-      }),
-      prisma.article.count({ where }),
-    ]);
+    const { items, total } = await findPagedArticles(
+      where,
+      page,
+      limit,
+      { publishedAt: "desc" }
+    );
 
     return { ok: true as const, items, total };
   },
@@ -177,7 +194,7 @@ export const articlesService = {
     return { ok: true as const, article };
   },
 
-    //-------------------------------------//
+  //-------------------------------------//
   //        Supprimer un article         //
   //-------------------------------------//
   async deleteById(id: string) {
@@ -199,4 +216,49 @@ export const articlesService = {
     return { ok: true as const };
   },
 
+  //-------------------------------------//
+  //     Liste admin des articles        //
+  //-------------------------------------//
+  async listAdmin(query: articlesValidators.ListAdminArticlesQuery) {
+    const { page, limit, q, status } = query;
+
+    //creation filtre prisma
+    const where: Prisma.ArticleWhereInput = {};
+
+    // Brouillons non supprimés
+    if (status === ArticleStatus.DRAFT) {
+      where.status = ArticleStatus.DRAFT;
+      where.deletedAt = null;
+    }
+
+    //Publiés non supprimés
+    if (status === ArticleStatus.PUBLISHED) {
+      where.status = ArticleStatus.PUBLISHED;
+      where.deletedAt = null;
+    }
+
+    //Suprimés
+    if (status === "DELETED") {
+      where.deletedAt = {
+        not: null,
+      };
+    }
+
+    // Recherche
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: "insensitive" } },
+        { content: { contains: q, mode: "insensitive" } },
+      ];
+    }
+
+    const { items, total } = await findPagedArticles(
+      where,
+      page,
+      limit,
+      { publishedAt: "desc" }
+    );
+
+    return { ok: true as const, items, total };
+  },
 };

@@ -99,3 +99,20 @@ export const deleteArticle = asyncHandler(async (req: Request, res: Response) =>
 
   return res.status(204).send();
 });
+
+//----------------------------------//
+//       Liste admin articles       //
+//----------------------------------//
+export const listAdminArticles = asyncHandler(async (req: Request, res: Response) => {
+  const query = parseOr400(articlesValidators.listAdminArticlesQuerySchema, req.query, res);
+  if (!query) return;
+
+  const result = await articlesService.listAdmin(query);
+
+  return res.status(200).json({
+    items: result.items,
+    page: query.page,
+    limit: query.limit,
+    total: result.total,
+  });
+});
