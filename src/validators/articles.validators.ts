@@ -25,8 +25,12 @@ export const articleIdParamSchema = z.object({
   id: CommonSchemas.uuidSchema,
 });
 
-export const updateArticleSchema = createArticleSchema.partial();
-
+export const updateArticleSchema = z.object({
+  title: z.string().trim().min(3).max(150).optional(),
+  content: z.string().trim().min(20).optional(),
+  excerpt: z.string().trim().max(300).optional(),
+  categoryIds: z.array(CommonSchemas.uuidSchema).max(10).optional(),
+});
 //Liste d'articles pour admin 
 export const listAdminArticlesQuerySchema = z.object({
   page: CommonSchemas.pageSchema,
@@ -34,6 +38,8 @@ export const listAdminArticlesQuerySchema = z.object({
   q: CommonSchemas.searchQuerySchema,
   status: z.enum(["ALL", "DRAFT", "PUBLISHED", "DELETED"]).default("ALL"),
 });
+
+
 
 
 

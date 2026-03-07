@@ -25,9 +25,8 @@ async function findPagedArticles(
       skip: (page - 1) * limit,
       take: limit,
       include: {
-        author: {
-          select: publicAuthorSelect,
-        },
+        author: {select: publicAuthorSelect},
+        categories: true,
       },
     }),
     prisma.article.count({ where }),
@@ -78,9 +77,8 @@ export const articlesService = {
         deletedAt: null,
       },
       include: {
-        author: {
-          select: publicAuthorSelect
-        },
+        author: {select: publicAuthorSelect},
+        categories: true,
       },
     });
 
@@ -178,37 +176,51 @@ export const articlesService = {
   //         Modifier un article         //
   //-------------------------------------//
   async updateById(id: string, data: articlesValidators.UpdateArticleInput) {
-    const existing = await prisma.article.findUnique({
-      where: { id },
-    });
+    const existing = await prisma.article.findUnique({ where: { id } });
 
     if (!existing || existing.deletedAt) {
       return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
     }
 
     let slug = existing.slug;
-
+    //Changement du titre => maj du slug 
     if (data.title && data.title !== existing.title) {
       const baseSlug = slugify(data.title);
       slug = baseSlug;
       let suffix = 2;
 
-      while (await prisma.article.findFirst({where: {slug, NOT: { id }}})) {
+      while (await prisma.article.findFirst({ where: { slug, NOT: { id } } })) {
         slug = `${baseSlug}-${suffix}`;
         suffix++;
+      }
+    }
+
+    //Separation des catégories
+    const { categoryIds, ...articleData } = data;
+
+    if (categoryIds) {
+      const categories = await prisma.category.findMany({
+        where: { id: { in: categoryIds } },
+        select: { id: true },
+      });
+
+      if (categories.length !== categoryIds.length) {
+        return { ok: false as const, error: "CATEGORY_NOT_FOUND" as const };
       }
     }
 
     const article = await prisma.article.update({
       where: { id },
       data: {
-        ...data,
+        ...articleData,
         slug,
+        ...(categoryIds
+          ? { categories: { set: categoryIds.map((categoryId) => ({ id: categoryId })) } }
+          : {}),
       },
       include: {
-        author: {
-          select: publicAuthorSelect
-        },
+        author: { select: publicAuthorSelect },
+        categories: true,
       },
     });
 
