@@ -5,4 +5,5 @@ import { requireRole } from "../middlewares/requireRole.middleware";
 
 export const categoriesRoutes = Router();
 
+categoriesRoutes.get("/", categoriesController.getCategories);
 categoriesRoutes.post("/", requireAuth, requireRole("ADMIN"), categoriesController.createCategory);
