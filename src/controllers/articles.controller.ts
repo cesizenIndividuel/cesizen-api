@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
-import { listArticlesQuerySchema, articleSlugParamSchema } from "../validators/articles.validators";
+import { listArticlesQuerySchema, articleSlugParamSchema, createArticleSchema  } from "../validators/articles.validators";
 import { articlesService } from "../services/articles.service";
 
 //----------------------------------//
@@ -34,4 +34,18 @@ export const getPublicArticle = asyncHandler(async (req: Request, res: Response)
   }
 
   return res.status(200).json(result.article);
+});
+
+//----------------------------------//
+//        Création article          //
+//----------------------------------//
+export const createArticle = asyncHandler(async (req: Request, res: Response) => {
+  const body = parseOr400(createArticleSchema, req.body, res);
+  if (!body) return;
+
+  const auth = req.auth as { userId: string; role: "USER" | "ADMIN" };
+
+  const result = await articlesService.create(body, auth.userId);
+
+  return res.status(201).json(result.article);
 });

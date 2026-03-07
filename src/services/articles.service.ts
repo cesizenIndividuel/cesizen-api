@@ -1,6 +1,26 @@
 import { prisma } from "../db/prisma";
-import type { ListArticlesQuery } from "../validators/articles.validators";
+import type { ListArticlesQuery, CreateArticleInput } from "../validators/articles.validators";
 import { ArticleStatus, Prisma } from "@prisma/client";
+
+function slugify(value: string): string {
+  return value
+    .normalize("NFD")                 // é => e + accent
+    .replace(/[\u0300-\u036f]/g, "")  // é => e
+    .toLowerCase()                    // HelLo => hello
+    .trim()                           // Supprime les espaces
+    .replace(/[^a-z0-9\s-]/g, "")     // Supprime caractères spéciaux 
+    .replace(/\s+/g, "-")             // " " => -
+    .replace(/-+/g, "-");             // "    " => -
+}
+
+const publicAuthorSelect = {
+  id: true,
+  pseudo: true,
+  firstName: true,
+  lastName: true,
+  avatarUrl: true,
+  role: true,
+} satisfies Prisma.UserSelect; //verifie la validité du select
 
 export const articlesService = {
   //-------------------------------------//
@@ -32,14 +52,7 @@ export const articlesService = {
         take: limit,
         include: {
           author: {
-            select: {
-              id: true,
-              pseudo: true,
-              firstName: true,
-              lastName: true,
-              avatarUrl: true,
-              role: true,
-            },
+            select: publicAuthorSelect
           },
         },
       }),
@@ -56,19 +69,12 @@ export const articlesService = {
     const article = await prisma.article.findFirst({
       where: {
         slug,
-        status: "PUBLISHED",
+        status: ArticleStatus.PUBLISHED,
         deletedAt: null,
       },
       include: {
         author: {
-          select: {
-            id: true,
-            pseudo: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-            role: true,
-          },
+          select: publicAuthorSelect
         },
       },
     });
@@ -77,5 +83,33 @@ export const articlesService = {
 
     return { ok: true as const, article };
   },
+
+  //-------------------------------------//
+  //         Créer un article            //
+  //-------------------------------------//
+  async create(data: CreateArticleInput, authorId: string) {
+    const baseSlug = slugify(data.title); 
+
+    let slug = baseSlug;
+    let suffix = 2;
+
+    while (await prisma.article.findUnique({ where: { slug } })) {
+      slug = `${baseSlug}-${suffix}`;
+      suffix++;
+    }
+
+    const article = await prisma.article.create({
+      data: {
+        title: data.title,
+        slug,
+        content: data.content,
+        excerpt: data.excerpt,
+        authorId,
+        status: ArticleStatus.DRAFT
+      }
+    });
+    return { ok: true as const, article };
+  }
+
 
 };

@@ -36,9 +36,7 @@ export const searchQuerySchema = z
   .min(1)
   .optional();
 
-export const slugParamSchema = z
-  .object({slug: z
-    .string()
-    .trim()
-    .min(1),
-});
+export const slugSchema = z
+  .string()
+  .trim()
+  .min(1);
