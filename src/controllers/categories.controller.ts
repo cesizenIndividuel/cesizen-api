@@ -48,3 +48,19 @@ export const updateCategory = asyncHandler(async (req: Request, res: Response) =
 
   return res.status(200).json(result.category);
 });
+
+//----------------------------------//
+//     Supprimer une catégorie      //
+//----------------------------------//
+export const deleteCategory = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(categoriesValidators.categoryIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const result = await categoriesService.deleteById(params.id);
+
+  if (!result.ok) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(204).send();
+});

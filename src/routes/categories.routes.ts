@@ -8,3 +8,4 @@ export const categoriesRoutes = Router();
 categoriesRoutes.get("/", categoriesController.getCategories);
 categoriesRoutes.post("/", requireAuth, requireRole("ADMIN"), categoriesController.createCategory);
 categoriesRoutes.patch("/:id", requireAuth, requireRole("ADMIN"), categoriesController.updateCategory);
+categoriesRoutes.delete("/:id", requireAuth, requireRole("ADMIN"), categoriesController.deleteCategory);

@@ -110,6 +110,25 @@ export const categoriesService = {
     return { ok: true as const, category };
   },
 
+    //-------------------------------------//
+  //      Supprimer une catégorie        //
+  //-------------------------------------//
+  async deleteById(id: string) {
+    const existing = await prisma.category.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return { ok: false as const, error: "CATEGORY_NOT_FOUND" as const };
+    }
+
+    await prisma.category.delete({
+      where: { id },
+    });
+
+    return { ok: true as const };
+  },
+
 
 
 };
