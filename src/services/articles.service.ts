@@ -154,6 +154,37 @@ export const articlesService = {
   },
 
   //-------------------------------------//
+  //       Restaurer un article          //
+  //-------------------------------------//
+  async restoreById(id: string) {
+    const existing = await prisma.article.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
+    }
+
+    if (!existing.deletedAt) {
+      return { ok: false as const, error: "ARTICLE_NOT_DELETED" as const };
+    }
+
+    const article = await prisma.article.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+      },
+      include: {
+        author: {
+          select: publicAuthorSelect,
+        },
+      },
+    });
+
+    return { ok: true as const, article };
+  },
+
+  //-------------------------------------//
   //         Modifier un article         //
   //-------------------------------------//
   async updateById(id: string, data: articlesValidators.UpdateArticleInput) {

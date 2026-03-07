@@ -10,6 +10,7 @@ articlesRoutes.get("/admin", requireAuth, requireRole("ADMIN"), articlesControll
 );
 articlesRoutes.post("/", requireAuth, requireRole("ADMIN"), articlesController.createArticle);
 articlesRoutes.patch("/:id/publish", requireAuth, requireRole("ADMIN"), articlesController.publishArticle);
+articlesRoutes.patch("/:id/restore", requireAuth, requireRole("ADMIN"),  articlesController.restoreArticle);
 articlesRoutes.patch("/:id", requireAuth, requireRole("ADMIN"), articlesController.updateArticle);
 articlesRoutes.delete("/:id", requireAuth, requireRole("ADMIN"), articlesController.deleteArticle);
 articlesRoutes.get("/slug/:slug", articlesController.getPublicArticle);
