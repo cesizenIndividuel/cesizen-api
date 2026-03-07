@@ -1,6 +1,5 @@
 import { prisma } from "../db/prisma";
-import type { ListArticlesQuery, CreateArticleInput } from "../validators/articles.validators";
-import { ArticleStatus, Prisma } from "@prisma/client";
+import type * as articlesValidators from "../validators/articles.validators";import { ArticleStatus, Prisma } from "@prisma/client";
 
 function slugify(value: string): string {
   return value
@@ -26,7 +25,7 @@ export const articlesService = {
   //-------------------------------------//
   //        Lister les articles          //
   //-------------------------------------//
-  async listPublic(query: ListArticlesQuery) {
+  async listPublic(query: articlesValidators.ListArticlesQuery) {
     const { page, limit, q } = query;
 
     //Filtre : articles publiés sans deleteAt, avec recherche
@@ -42,7 +41,6 @@ export const articlesService = {
           }
         : {}),
     };
-
     //Recuperer les articles de la page + nbr totale des articles
     const [items, total] = await Promise.all([
       prisma.article.findMany({
@@ -87,7 +85,7 @@ export const articlesService = {
   //-------------------------------------//
   //         Créer un article            //
   //-------------------------------------//
-  async create(data: CreateArticleInput, authorId: string) {
+  async create(data: articlesValidators.CreateArticleInput, authorId: string) {
     const baseSlug = slugify(data.title); 
 
     let slug = baseSlug;
@@ -137,4 +135,47 @@ export const articlesService = {
     });
     return { ok: true as const, article };
   },
+
+  //-------------------------------------//
+  //         Modifier un article         //
+  //-------------------------------------//
+  async updateById(id: string, data: articlesValidators.UpdateArticleInput) {
+    const existing = await prisma.article.findUnique({
+      where: { id },
+    });
+
+    if (!existing || existing.deletedAt) {
+      return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
+    }
+
+    let slug = existing.slug;
+
+    if (data.title && data.title !== existing.title) {
+      const baseSlug = slugify(data.title);
+      slug = baseSlug;
+      let suffix = 2;
+
+      while (await prisma.article.findFirst({where: {slug, NOT: { id }}})) {
+        slug = `${baseSlug}-${suffix}`;
+        suffix++;
+      }
+    }
+
+    const article = await prisma.article.update({
+      where: { id },
+      data: {
+        ...data,
+        slug,
+      },
+      include: {
+        author: {
+          select: publicAuthorSelect
+        },
+      },
+    });
+
+    return { ok: true as const, article };
+  },
+
+
 };
