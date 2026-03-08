@@ -1,27 +1,23 @@
 import { prisma } from "../db/prisma";
 import type * as articlesValidators from "../validators/articles.validators";
 import { ArticleStatus, Prisma } from "@prisma/client";
+import { slugify } from "../utils/slug";
 
-const publicAuthorSelect = {
-  id: true,
-  pseudo: true,
-  firstName: true,
-  lastName: true,
-  avatarUrl: true,
-  role: true,
-} satisfies Prisma.UserSelect; //verifie la validité du select
+const articleInclude = {
+  author: {
+    select: {
+      id: true,
+      pseudo: true,
+      firstName: true,
+      lastName: true,
+      avatarUrl: true,
+      role: true,
+    },
+  },
+  categories: true,
+} satisfies Prisma.ArticleInclude;
 
-function slugify(value: string): string {
-  return value
-    .normalize("NFD")                 // é => e + accent
-    .replace(/[\u0300-\u036f]/g, "")  // é => e
-    .toLowerCase()                    // HelLo => hello
-    .trim()                           // Supprime les espaces
-    .replace(/[^a-z0-9\s-]/g, "")     // Supprime caractères spéciaux 
-    .replace(/\s+/g, "-")             // " " => -
-    .replace(/-+/g, "-");             // "    " => -
-}
-
+//Recupere un liste paginée et le nombre totale d'articles
 async function findPagedArticles(
   where: Prisma.ArticleWhereInput,
   page: number,
@@ -34,11 +30,7 @@ async function findPagedArticles(
       orderBy,
       skip: (page - 1) * limit,
       take: limit,
-      include: {
-        author: {
-          select: publicAuthorSelect,
-        },
-      },
+      include: articleInclude
     }),
     prisma.article.count({ where }),
   ]);
@@ -46,33 +38,65 @@ async function findPagedArticles(
   return { items, total };
 }
 
+//Verfie les catégories
+async function ensureCategoriesExist(categoryIds: string[]) {
+  const categories = await prisma.category.findMany({
+    where: { id: { in: categoryIds } },
+    select: { id: true },
+  });
+
+  return categories.length === categoryIds.length;
+}
+
+//Générer un slug uniquement 
+async function buildUniqueArticleSlug(title: string, currentId?: string) {
+  const baseSlug = slugify(title);
+  let slug = baseSlug;
+  let suffix = 2;
+
+  while (
+    await prisma.article.findFirst({
+      where: {
+        slug,
+        ...(currentId ? { NOT: { id: currentId } } : {}),
+      },
+    })
+  ) {
+    slug = `${baseSlug}-${suffix}`;
+    suffix++;
+  }
+
+  return slug;
+}
+
+
+
 export const articlesService = {
   //-------------------------------------//
   //        Lister les articles          //
   //-------------------------------------//
   async listPublic(query: articlesValidators.ListArticlesQuery) {
-    const { page, limit, q } = query;
+    const { page, limit, q, category } = query;
 
-    //Filtre : articles publiés sans deleteAt, avec recherche
     const where: Prisma.ArticleWhereInput = {
       status: ArticleStatus.PUBLISHED,
       deletedAt: null,
-      ...(q
-        ? {
-            OR: [
-              { title: { contains: q, mode: "insensitive" } }, 
-              { content: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
+      ...(q ? {
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { content: { contains: q, mode: "insensitive" } }
+        ]
+      } : {}),
+      ...(category ? {
+        categories: {
+          some: { slug: category }
+        }
+      } : {})
     };
-    //Recuperer les articles de la page + nbr totale des articles
-    const { items, total } = await findPagedArticles(
-      where,
-      page,
-      limit,
-      { publishedAt: "desc" }
-    );
+
+    const { items, total } = await findPagedArticles(where, page, limit, {
+      publishedAt: "desc"
+    });
 
     return { ok: true as const, items, total };
   },
@@ -87,11 +111,7 @@ export const articlesService = {
         status: ArticleStatus.PUBLISHED,
         deletedAt: null,
       },
-      include: {
-        author: {
-          select: publicAuthorSelect
-        },
-      },
+      include: articleInclude
     });
 
     if (!article) return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
@@ -103,26 +123,32 @@ export const articlesService = {
   //         Créer un article            //
   //-------------------------------------//
   async create(data: articlesValidators.CreateArticleInput, authorId: string) {
-    const baseSlug = slugify(data.title); 
+    const slug = await buildUniqueArticleSlug(data.title);
+    
+    const { categoryIds, ...articleData } = data;
 
-    let slug = baseSlug;
-    let suffix = 2;
-
-    while (await prisma.article.findUnique({ where: { slug } })) {
-      slug = `${baseSlug}-${suffix}`;
-      suffix++;
+    if (categoryIds) {
+      const categoriesExist = await ensureCategoriesExist(categoryIds);
+      if (!categoriesExist) {
+        return { ok: false as const, error: "CATEGORY_NOT_FOUND" as const };
+      }
     }
 
     const article = await prisma.article.create({
       data: {
-        title: data.title,
+        ...articleData,
         slug,
-        content: data.content,
-        excerpt: data.excerpt,
         authorId,
-        status: ArticleStatus.DRAFT
-      }
+        status: ArticleStatus.DRAFT,
+        ...(categoryIds && {
+          categories: {
+            connect: categoryIds.map(id => ({ id }))
+          }
+        })
+      },
+      include: articleInclude
     });
+
     return { ok: true as const, article };
   },
 
@@ -144,11 +170,7 @@ export const articlesService = {
         status: ArticleStatus.PUBLISHED,
         publishedAt: new Date(),
       },
-      include: {
-        author: {
-          select: publicAuthorSelect
-        },
-      },
+      include: articleInclude
     });
     return { ok: true as const, article };
   },
@@ -174,11 +196,7 @@ export const articlesService = {
       data: {
         deletedAt: null,
       },
-      include: {
-        author: {
-          select: publicAuthorSelect,
-        },
-      },
+      include: articleInclude
     });
 
     return { ok: true as const, article };
@@ -188,38 +206,38 @@ export const articlesService = {
   //         Modifier un article         //
   //-------------------------------------//
   async updateById(id: string, data: articlesValidators.UpdateArticleInput) {
-    const existing = await prisma.article.findUnique({
-      where: { id },
-    });
+    const existing = await prisma.article.findUnique({ where: { id } });
 
     if (!existing || existing.deletedAt) {
       return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
     }
 
     let slug = existing.slug;
-
+    //Changement du titre => maj du slug 
     if (data.title && data.title !== existing.title) {
-      const baseSlug = slugify(data.title);
-      slug = baseSlug;
-      let suffix = 2;
+      slug = await buildUniqueArticleSlug(data.title, id);
+    }
 
-      while (await prisma.article.findFirst({where: {slug, NOT: { id }}})) {
-        slug = `${baseSlug}-${suffix}`;
-        suffix++;
+    //Separation des catégories
+    const { categoryIds, ...articleData } = data;
+
+    if (categoryIds) {
+      const categoriesExist = await ensureCategoriesExist(categoryIds);
+      if (!categoriesExist) {
+        return { ok: false as const, error: "CATEGORY_NOT_FOUND" as const };
       }
     }
 
     const article = await prisma.article.update({
       where: { id },
       data: {
-        ...data,
+        ...articleData,
         slug,
+        ...(categoryIds
+          ? { categories: { set: categoryIds.map((categoryId) => ({ id: categoryId })) } }
+          : {}),
       },
-      include: {
-        author: {
-          select: publicAuthorSelect
-        },
-      },
+      include: articleInclude
     });
 
     return { ok: true as const, article };
@@ -308,11 +326,7 @@ export const articlesService = {
     const article = await prisma.article.update({
       where: { id },
       data: { imageUrl },
-      include: {
-        author: {
-          select: publicAuthorSelect,
-        },
-      },
+      include: articleInclude
     });
 
     return {

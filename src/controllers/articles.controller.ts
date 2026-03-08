@@ -100,9 +100,10 @@ export const updateArticle = asyncHandler(async (req: Request, res: Response) =>
   const result = await articlesService.updateById(params.id, body);
 
   if (!result.ok) {
-    return res.status(404).json({ error: result.error });
+    if (result.error === "CATEGORY_NOT_FOUND"|| "ARTICLE_NOT_FOUND") {
+      return res.status(404).json({ error: result.error });
+    }
   }
-
   return res.status(200).json(result.article);
 });
 
