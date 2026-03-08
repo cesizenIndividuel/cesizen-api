@@ -29,3 +29,14 @@ export const submitDiagnostic = asyncHandler(async (req: Request, res: Response)
 
   return res.status(201).json(result.diagnostic);
 });
+
+//-------------------------------------//
+//     Historique de mes diagnostics   //
+//-------------------------------------//
+export const getMyDiagnostics = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
+
+  const diagnostics = await diagnosticsService.findMyDiagnostics(userId);
+
+  return res.status(200).json(diagnostics);
+});

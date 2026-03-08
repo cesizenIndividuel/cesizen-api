@@ -8,3 +8,4 @@ diagnosticsRoutes.use(requireAuth);
 
 diagnosticsRoutes.get("/questions", diagnostics.getDiagnosticQuestions);
 diagnosticsRoutes.post("/", diagnostics.submitDiagnostic);
+diagnosticsRoutes.get("/history", diagnostics.getMyDiagnostics);

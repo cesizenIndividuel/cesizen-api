@@ -111,7 +111,29 @@ export const diagnosticsService = {
         createdAt: true,
       },
     });
-    
+
     return { ok: true as const, diagnostic };
+  },
+
+  //-------------------------------------//
+  //      Historique des diagnostics     //
+  //-------------------------------------//
+  async findMyDiagnostics(userId: string) {
+    const diagnostics = await prisma.stressDiagnostic.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        score: true,
+        level: true,
+        createdAt: true
+      }
+    });
+
+    return diagnostics;
   }
+
+
+
+
 };
