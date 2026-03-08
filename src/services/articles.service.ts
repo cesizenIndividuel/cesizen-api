@@ -3,14 +3,19 @@ import type * as articlesValidators from "../validators/articles.validators";
 import { ArticleStatus, Prisma } from "@prisma/client";
 import { slugify } from "../utils/slug";
 
-const publicAuthorSelect = {
-  id: true,
-  pseudo: true,
-  firstName: true,
-  lastName: true,
-  avatarUrl: true,
-  role: true,
-} satisfies Prisma.UserSelect; //verifie la validité du select
+const articleInclude = {
+  author: {
+    select: {
+      id: true,
+      pseudo: true,
+      firstName: true,
+      lastName: true,
+      avatarUrl: true,
+      role: true,
+    },
+  },
+  categories: true,
+} satisfies Prisma.ArticleInclude;
 
 //Recupere un liste paginée et le nombre totale d'articles
 async function findPagedArticles(
@@ -25,10 +30,7 @@ async function findPagedArticles(
       orderBy,
       skip: (page - 1) * limit,
       take: limit,
-      include: {
-        author: {select: publicAuthorSelect},
-        categories: true,
-      },
+      include: articleInclude
     }),
     prisma.article.count({ where }),
   ]);
@@ -109,10 +111,7 @@ export const articlesService = {
         status: ArticleStatus.PUBLISHED,
         deletedAt: null,
       },
-      include: {
-        author: {select: publicAuthorSelect},
-        categories: true,
-      },
+      include: articleInclude
     });
 
     if (!article) return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
@@ -147,10 +146,7 @@ export const articlesService = {
           }
         })
       },
-      include: {
-        author: { select: publicAuthorSelect },
-        categories: true
-      }
+      include: articleInclude
     });
 
     return { ok: true as const, article };
@@ -174,10 +170,7 @@ export const articlesService = {
         status: ArticleStatus.PUBLISHED,
         publishedAt: new Date(),
       },
-      include: {
-        author: {select: publicAuthorSelect},
-        categories: true,
-      },
+      include: articleInclude
     });
     return { ok: true as const, article };
   },
@@ -203,10 +196,7 @@ export const articlesService = {
       data: {
         deletedAt: null,
       },
-      include: {
-        author: {select: publicAuthorSelect},
-        categories: true,
-      },
+      include: articleInclude
     });
 
     return { ok: true as const, article };
@@ -247,10 +237,7 @@ export const articlesService = {
           ? { categories: { set: categoryIds.map((categoryId) => ({ id: categoryId })) } }
           : {}),
       },
-      include: {
-        author: { select: publicAuthorSelect },
-        categories: true,
-      },
+      include: articleInclude
     });
 
     return { ok: true as const, article };
@@ -339,10 +326,7 @@ export const articlesService = {
     const article = await prisma.article.update({
       where: { id },
       data: { imageUrl },
-      include: {
-        author: {select: publicAuthorSelect},
-        categories: true,
-      },
+      include: articleInclude
     });
 
     return {
