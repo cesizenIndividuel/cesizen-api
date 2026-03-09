@@ -60,4 +60,25 @@ export const favoritesService = {
 
     return { ok: true as const };
   },
+
+  //-------------------------------------//
+  //        Lister mes favoris           //
+  //-------------------------------------//
+  async findMine(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        favoriteArticles: {
+          where: {
+            status: ArticleStatus.PUBLISHED,
+            deletedAt: null,
+          },
+          orderBy: { publishedAt: "desc" },
+          select: favoriteArticleSelect,
+        },
+      },
+    });
+
+    return user?.favoriteArticles ?? [];
+  },
 };

@@ -34,3 +34,14 @@ export const removeFavorite = asyncHandler(async (req: Request, res: Response) =
 
   return res.status(204).send();
 });
+
+//-------------------------------------//
+//         Lister mes favoris          //
+//-------------------------------------//
+export const getMyFavorites = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
+
+  const favorites = await favoritesService.findMine(userId);
+
+  return res.status(200).json(favorites);
+});
