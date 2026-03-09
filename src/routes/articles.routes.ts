@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as articlesController from "../controllers/articles.controller";
+import * as comments from "../controllers/comments.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
 import { optionalAuth } from "../middlewares/optionalAuth.middleware";
 import { requireRole } from "../middlewares/requireRole.middleware";
@@ -18,3 +19,5 @@ articlesRoutes.patch("/:id/restore", requireAuth, requireRole("ADMIN"),  article
 articlesRoutes.patch("/:id", requireAuth, requireRole("ADMIN"), articlesController.updateArticle);
 articlesRoutes.delete("/:id", requireAuth, requireRole("ADMIN"), articlesController.deleteArticle);
 articlesRoutes.get("/slug/:slug", articlesController.getPublicArticle);
+
+articlesRoutes.post("/:id/comments", requireAuth, comments.createComment);
