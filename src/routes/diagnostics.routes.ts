@@ -16,3 +16,4 @@ diagnosticsRoutes.get("/history", diagnostics.getMyDiagnostics);
 // ========== ADMIN ==========//
 diagnosticsRoutes.get("/admin/questions", requireRole("ADMIN"), diagnostics.getDiagnosticQuestionsAdmin);
 diagnosticsRoutes.patch("/admin/questions/:id", requireRole("ADMIN"), diagnostics.updateDiagnosticQuestion);
+diagnosticsRoutes.patch("/admin/answers/:id", requireRole("ADMIN"), diagnostics.updateDiagnosticAnswer);

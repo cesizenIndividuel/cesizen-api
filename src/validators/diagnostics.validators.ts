@@ -25,5 +25,19 @@ export const updateDiagnosticQuestionSchema = z
     message: "Au moins un champ doit être fourni",
   });
 
+  export const diagnosticAnswerIdParamSchema = z.object({
+  id: CommonSchemas.uuidSchema,
+});
+
+export const updateDiagnosticAnswerSchema = z
+  .object({
+    label: z.string().trim().min(1).optional(),
+    weight: z.number().int().min(0).optional(),
+    order: z.number().int().positive().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "Au moins un champ doit être fourni",
+  });
+
 export type SubmitDiagnosticInput = z.infer<typeof submitDiagnosticSchema>;
 export type UpdateDiagnosticQuestionInput = z.infer<typeof updateDiagnosticQuestionSchema>;

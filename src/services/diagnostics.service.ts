@@ -1,6 +1,45 @@
 import { prisma } from "../db/prisma";
 import type { SubmitDiagnosticInput } from "../validators/diagnostics.validators";
 
+const publicQuestionSelect = {
+  id: true,
+  label: true,
+  order: true,
+  answers: {
+    where: { isActive: true },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      label: true,
+    },
+  },
+} as const;
+
+const adminQuestionSelect = {
+  id: true,
+  label: true,
+  order: true,
+  isActive: true,
+  createdAt: true,
+  updatedAt: true,
+  answers: {
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      label: true,
+      weight: true,
+      order: true,
+      isActive: true,
+    },
+  },
+} as const;
+
+const diagnosticSelect = {
+  id: true,
+  score: true,
+  level: true,
+  createdAt: true,
+} as const;
 
 export const diagnosticsService = {
   //-------------------------------------//
@@ -10,16 +49,7 @@ export const diagnosticsService = {
     const questions = await prisma.stressQuestion.findMany({
       where: {isActive: true},
       orderBy: {order: "asc"},
-      select: {
-        id: true,
-        label: true,
-        order: true,
-        answers: {
-          where: {isActive: true},
-          orderBy: {order: "asc"},
-          select: {id: true, label: true},
-        },
-      },
+      select: publicQuestionSelect
     });
 
     return { ok: true as const, questions };
@@ -30,35 +60,27 @@ export const diagnosticsService = {
   //-------------------------------------//
   async submit(userId: string, data: SubmitDiagnosticInput) {
 
-    //Récupérer toutes les questions actives du diagnostic
+    //----------VERIFIER QUESTIONS ENVOYEES----------//
     const activeQuestions = await prisma.stressQuestion.findMany({
       where: { isActive: true },
       select: { id: true },
     });
 
-    //Transformer les questions en liste d'id : [{id:q1},{id:q2}] → ["q1","q2"]
     const activeQuestionIds = activeQuestions.map((question) => question.id);
-
-    //Récupérer les questions envoyées par le front : [{q1,a3},{q2,a7}] → ["q1","q2"]
     const sentQuestionIds = data.answers.map((item) => item.questionId);
-
-    //Set enlève automatiquement les doublons
     const uniqueQuestionIds = new Set(sentQuestionIds);
 
-    //Si le nombre de questions uniques est différent du nombre de réponses alors une question a été envoyée plusieurs fois
     if (uniqueQuestionIds.size !== data.answers.length) {
       return { ok: false as const, error: "DUPLICATE_QUESTION" as const };
     }
 
-    //Vérifier que toutes les questions ont une réponse
     if (data.answers.length !== activeQuestionIds.length) {
       return { ok: false as const, error: "MISSING_ANSWERS" as const };
     }
 
-    //Récupérer les ids des réponses envoyées
+    //----------VERIFIER LES REPONSES----------//
     const answerIds = data.answers.map((item) => item.answerId);
 
-    //Récupérer les réponses dans la base de données
     const selectedAnswers = await prisma.stressAnswer.findMany({
       where: {
         id: { in: answerIds },
@@ -71,15 +93,11 @@ export const diagnosticsService = {
       },
     });
 
-    //Créer une Map pour retrouver rapidement une réponse par son id
-    const answerById = new Map(
-      selectedAnswers.map((answer) => [answer.id, answer])
-    );
+    const answerById = new Map(selectedAnswers.map((answer) => [answer.id, answer]));
 
-    //Calculer le score total du diagnostic
+    //----------CALCUL DU SCORE ET DU NIVEAU----------//
     const score = selectedAnswers.reduce((total, answer) => total + answer.weight, 0);
 
-    //Déterminer le niveau de stress
     let level: "LOW" | "MEDIUM" | "HIGH";
 
     if (score < 150) {
@@ -89,14 +107,13 @@ export const diagnosticsService = {
     } else {
       level = "HIGH";
     }
-    //Enregistrer le diagnostic dans la base
+
+    //----------CALCUL DU SCORE ET DU NIVEAU----------//
     const diagnostic = await prisma.stressDiagnostic.create({
       data: {
         userId,
         score,
         level,
-
-        //Enregistrer aussi les réponses choisies
         answers: {
           create: data.answers.map((item) => ({
             questionId: item.questionId,
@@ -104,12 +121,7 @@ export const diagnosticsService = {
           })),
         },
       },
-      select: {
-        id: true,
-        score: true,
-        level: true,
-        createdAt: true,
-      },
+      select: diagnosticSelect
     });
 
     return { ok: true as const, diagnostic };
@@ -122,18 +134,13 @@ export const diagnosticsService = {
     const diagnostics = await prisma.stressDiagnostic.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        score: true,
-        level: true,
-        createdAt: true
-      }
+      select: diagnosticSelect
     });
 
     return diagnostics;
   },
 
-    //-------------------------------------//
+  //-------------------------------------//
   //   Admin - Liste des questions       //
   //-------------------------------------//
   async findAllQuestionsForAdmin() {
@@ -141,26 +148,7 @@ export const diagnosticsService = {
       orderBy: {
         order: "asc",
       },
-      select: {
-        id: true,
-        label: true,
-        order: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        answers: {
-          orderBy: {
-            order: "asc",
-          },
-          select: {
-            id: true,
-            label: true,
-            weight: true,
-            order: true,
-            isActive: true,
-          },
-        },
-      },
+      select: adminQuestionSelect
     });
 
     return questions;
@@ -206,6 +194,58 @@ export const diagnosticsService = {
     });
 
     return { ok: true as const, question };
+  },
+
+  //-------------------------------------//
+  //    Admin - Modifier une réponse     //
+  //-------------------------------------//
+  async updateAnswerById(
+    id: string,
+    data: { label?: string; weight?: number; order?: number }
+  ) {
+    const existing = await prisma.stressAnswer.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        questionId: true,
+        order: true,
+      },
+    });
+
+    if (!existing) {
+      return { ok: false as const, error: "ANSWER_NOT_FOUND" as const };
+    }
+
+    if (data.order !== undefined && data.order !== existing.order) {
+      const orderUsed = await prisma.stressAnswer.findFirst({
+        where: {
+          questionId: existing.questionId,
+          order: data.order,
+          NOT: { id },
+        },
+      });
+
+      if (orderUsed) {
+        return { ok: false as const, error: "ANSWER_ORDER_ALREADY_USED" as const };
+      }
+    }
+
+    const answer = await prisma.stressAnswer.update({
+      where: { id },
+      data: {
+        ...data,
+      },
+      select: {
+        id: true,
+        label: true,
+        weight: true,
+        order: true,
+        isActive: true,
+        questionId: true,
+      },
+    });
+
+    return { ok: true as const, answer };
   },
 
 

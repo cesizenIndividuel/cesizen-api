@@ -72,3 +72,26 @@ export const updateDiagnosticQuestion = asyncHandler(async (req: Request, res: R
 
   return res.status(200).json(result.question);
 });
+
+//-------------------------------------//
+//    Admin - Modifier une réponse     //
+//-------------------------------------//
+export const updateDiagnosticAnswer = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(diagnosticsValidators.diagnosticAnswerIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const body = parseOr400(diagnosticsValidators.updateDiagnosticAnswerSchema, req.body, res);
+  if (!body) return;
+
+  const result = await diagnosticsService.updateAnswerById(params.id, body);
+
+  if (!result.ok) {
+    if (result.error === "ANSWER_ORDER_ALREADY_USED") {
+      return res.status(409).json({ error: result.error });
+    }
+
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.answer);
+});
