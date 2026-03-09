@@ -49,3 +49,26 @@ export const getDiagnosticQuestionsAdmin = asyncHandler(async (req: Request, res
 
   return res.status(200).json(questions);
 });
+
+//-------------------------------------//
+//   Admin - Modifier une question     //
+//-------------------------------------//
+export const updateDiagnosticQuestion = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(diagnosticsValidators.diagnosticQuestionIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const body = parseOr400(diagnosticsValidators.updateDiagnosticQuestionSchema, req.body, res);
+  if (!body) return;
+
+  const result = await diagnosticsService.updateQuestionById(params.id, body);
+
+  if (!result.ok) {
+    if (result.error === "QUESTION_ORDER_ALREADY_USED") {
+      return res.status(409).json({ error: result.error });
+    }
+
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.question);
+});

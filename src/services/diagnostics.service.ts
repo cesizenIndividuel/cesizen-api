@@ -166,7 +166,47 @@ export const diagnosticsService = {
     return questions;
   },
 
+  //-------------------------------------//
+  //   Admin - Modifier une question     //
+  //-------------------------------------//
+  async updateQuestionById(id: string, data: { label?: string; order?: number }) {
+    const existing = await prisma.stressQuestion.findUnique({
+      where: { id },
+    });
 
+    if (!existing) {
+      return { ok: false as const, error: "QUESTION_NOT_FOUND" as const };
+    }
+
+    if (data.order !== undefined && data.order !== existing.order) {
+      const orderUsed = await prisma.stressQuestion.findFirst({
+        where: {
+          order: data.order,
+          NOT: { id },
+        },
+      });
+
+      if (orderUsed) {
+        return { ok: false as const, error: "QUESTION_ORDER_ALREADY_USED" as const };
+      }
+    }
+
+    const question = await prisma.stressQuestion.update({
+      where: { id },
+      data: {
+        ...data,
+      },
+      select: {
+        id: true,
+        label: true,
+        order: true,
+        isActive: true,
+        updatedAt: true,
+      },
+    });
+
+    return { ok: true as const, question };
+  },
 
 
 };
