@@ -6,6 +6,7 @@ import { articlesRoutes } from "./articles.routes";
 import { categoriesRoutes } from "./categories.routes";
 import { diagnosticsRoutes } from "./diagnostics.routes";
 import { favoritesRoutes } from "./favorites.routes";
+import { commentsRoutes } from "./comments.routes";
 
 export const router = Router();
 
@@ -16,3 +17,4 @@ router.use("/articles", articlesRoutes);
 router.use("/categories", categoriesRoutes);
 router.use("/diagnostic", diagnosticsRoutes);
 router.use("/favorites", favoritesRoutes);
+router.use("/comments", commentsRoutes);

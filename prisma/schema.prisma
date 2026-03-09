@@ -39,6 +39,7 @@ model User {
   articles         Article[]
   diagnostics      StressDiagnostic[]
   favoriteArticles Article[]          @relation("UserFavorites")
+  comments         Comment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -74,6 +75,7 @@ model Article {
 
   categories  Category[]
   favoritedBy User[]     @relation("UserFavorites")
+  comments    Comment[]
 }
 
 model Category {
@@ -143,4 +145,21 @@ model StressDiagnosticAnswer {
   answer   StressAnswer @relation(fields: [answerId], references: [id])
 
   @@unique([diagnosticId, questionId])
+}
+
+model Comment {
+  id      String @id @default(uuid())
+  content String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  articleId String
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([articleId, createdAt])
+  @@index([userId])
 }
