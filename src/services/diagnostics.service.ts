@@ -131,7 +131,40 @@ export const diagnosticsService = {
     });
 
     return diagnostics;
-  }
+  },
+
+    //-------------------------------------//
+  //   Admin - Liste des questions       //
+  //-------------------------------------//
+  async findAllQuestionsForAdmin() {
+    const questions = await prisma.stressQuestion.findMany({
+      orderBy: {
+        order: "asc",
+      },
+      select: {
+        id: true,
+        label: true,
+        order: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        answers: {
+          orderBy: {
+            order: "asc",
+          },
+          select: {
+            id: true,
+            label: true,
+            weight: true,
+            order: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    return questions;
+  },
 
 
 

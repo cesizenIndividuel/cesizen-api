@@ -40,3 +40,12 @@ export const getMyDiagnostics = asyncHandler(async (req: Request, res: Response)
 
   return res.status(200).json(diagnostics);
 });
+
+//-------------------------------------//
+//   Admin - Liste des questions       //
+//-------------------------------------//
+export const getDiagnosticQuestionsAdmin = asyncHandler(async (req: Request, res: Response) => {
+  const questions = await diagnosticsService.findAllQuestionsForAdmin();
+
+  return res.status(200).json(questions);
+});
