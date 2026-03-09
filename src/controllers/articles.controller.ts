@@ -10,7 +10,8 @@ export const listPublicArticles = asyncHandler(async (req: Request, res: Respons
   const query = parseOr400(articlesValidators.listArticlesQuerySchema, req.query, res);
   if (!query) return;
 
-  const result = await articlesService.listPublic(query);
+  const userId = req.auth?.userId;
+  const result = await articlesService.listPublic(query, userId);
 
   return res.status(200).json({
     items: result.items,

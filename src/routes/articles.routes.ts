@@ -1,13 +1,14 @@
 import { Router } from "express";
 import * as articlesController from "../controllers/articles.controller";
 import { requireAuth } from "../middlewares/auth.middleware";
+import { optionalAuth } from "../middlewares/optionalAuth.middleware";
 import { requireRole } from "../middlewares/requireRole.middleware";
 import { uploadArticleImage } from "../middlewares/upload.middleware";
 import { multerErrorHandler } from "../middlewares/multerError.middleware";
 
 export const articlesRoutes = Router();
 
-articlesRoutes.get("/", articlesController.listPublicArticles);
+articlesRoutes.get("/", optionalAuth, articlesController.listPublicArticles);
 articlesRoutes.get("/admin", requireAuth, requireRole("ADMIN"), articlesController.listAdminArticles
 );
 articlesRoutes.post("/", requireAuth, requireRole("ADMIN"), articlesController.createArticle);

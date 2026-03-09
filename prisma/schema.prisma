@@ -35,9 +35,10 @@ model User {
   pseudo        String    @unique
   cguAcceptedAt DateTime?
 
-  refreshTokens RefreshToken[]
-  articles      Article[]
-  diagnostics   StressDiagnostic[]
+  refreshTokens    RefreshToken[]
+  articles         Article[]
+  diagnostics      StressDiagnostic[]
+  favoriteArticles Article[]          @relation("UserFavorites")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -71,7 +72,8 @@ model Article {
   authorId String?
   author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
-  categories Category[]
+  categories  Category[]
+  favoritedBy User[]     @relation("UserFavorites")
 }
 
 model Category {
