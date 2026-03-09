@@ -44,4 +44,20 @@ export const favoritesService = {
 
     return { ok: true as const, favorite };
   },
+
+  //-------------------------------------//
+  //    Retirer un article favori        //
+  //-------------------------------------//
+  async remove(userId: string, articleId: string) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        favoriteArticles: {
+          disconnect: { id: articleId },
+        },
+      },
+    });
+
+    return { ok: true as const };
+  },
 };

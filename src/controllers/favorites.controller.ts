@@ -20,3 +20,17 @@ export const addFavorite = asyncHandler(async (req: Request, res: Response) => {
 
   return res.status(201).json(result.favorite);
 });
+
+//-------------------------------------//
+//    Retirer un article favori        //
+//-------------------------------------//
+export const removeFavorite = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.auth!.userId;
+
+  const params = parseOr400(favoritesValidators.favoriteArticleIdParamSchema, req.params, res);
+  if (!params) return;
+
+  await favoritesService.remove(userId, params.articleId);
+
+  return res.status(204).send();
+});

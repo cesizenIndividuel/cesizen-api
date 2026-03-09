@@ -7,3 +7,4 @@ export const favoritesRoutes = Router();
 favoritesRoutes.use(requireAuth);
 
 favoritesRoutes.post("/:articleId", favorites.addFavorite);
+favoritesRoutes.delete("/:articleId", favorites.removeFavorite);
