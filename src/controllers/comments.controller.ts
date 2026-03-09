@@ -23,3 +23,19 @@ export const createComment = asyncHandler(async (req: Request, res: Response) =>
 
   return res.status(201).json(result.comment);
 });
+
+//-------------------------------------//
+//    Lister les commentaires          //
+//-------------------------------------//
+export const getArticleComments = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(commentsValidators.commentArticleIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const result = await commentsService.findByArticleId(params.id);
+
+  if (!result.ok) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.comments);
+});

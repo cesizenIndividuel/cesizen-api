@@ -20,4 +20,5 @@ articlesRoutes.patch("/:id", requireAuth, requireRole("ADMIN"), articlesControll
 articlesRoutes.delete("/:id", requireAuth, requireRole("ADMIN"), articlesController.deleteArticle);
 articlesRoutes.get("/slug/:slug", articlesController.getPublicArticle);
 
+articlesRoutes.get("/:id/comments", comments.getArticleComments);
 articlesRoutes.post("/:id/comments", requireAuth, comments.createComment);

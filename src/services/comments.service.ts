@@ -50,4 +50,37 @@ export const commentsService = {
 
     return { ok: true as const, comment };
   },
+
+  //-------------------------------------//
+  //    Lister les commentaires          //
+  //-------------------------------------//
+  async findByArticleId(articleId: string) {
+    const article = await prisma.article.findFirst({
+      where: {
+        id: articleId,
+        status: ArticleStatus.PUBLISHED,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!article) {
+      return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
+    }
+
+    const comments = await prisma.comment.findMany({
+      where: {
+        articleId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: commentSelect,
+    });
+
+    return { ok: true as const, comments };
+  },
+
 };
