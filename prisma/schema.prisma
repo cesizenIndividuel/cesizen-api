@@ -12,6 +12,17 @@ enum Role {
   ADMIN
 }
 
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum StressLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -26,6 +37,7 @@ model User {
 
   refreshTokens RefreshToken[]
   articles      Article[]
+  diagnostics   StressDiagnostic[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -41,11 +53,6 @@ model RefreshToken {
   revokedAt DateTime?
 
   @@index([userId])
-}
-
-enum ArticleStatus {
-  DRAFT
-  PUBLISHED
 }
 
 model Article {
@@ -75,4 +82,63 @@ model Category {
   updatedAt DateTime @updatedAt
 
   articles Article[]
+}
+
+model StressQuestion {
+  id          String   @id @default(uuid())
+  label       String
+  description String?
+  order       Int
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  answers           StressAnswer[]
+  diagnosticAnswers StressDiagnosticAnswer[]
+
+  @@unique([order])
+  @@index([isActive, order])
+}
+
+model StressAnswer {
+  id         String         @id @default(uuid())
+  label      String
+  weight     Int
+  order      Int
+  isActive   Boolean        @default(true)
+  questionId String
+  question   StressQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  stressDiagnosticAnswers StressDiagnosticAnswer[]
+
+  @@unique([questionId, order])
+}
+
+model StressDiagnostic {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score     Int
+  level     StressLevel
+  createdAt DateTime    @default(now())
+
+  answers StressDiagnosticAnswer[]
+
+  @@index([userId])
+}
+
+model StressDiagnosticAnswer {
+  id           String           @id @default(uuid())
+  diagnosticId String
+  diagnostic   StressDiagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+
+  questionId String
+  question   StressQuestion @relation(fields: [questionId], references: [id])
+
+  answerId String
+  answer   StressAnswer @relation(fields: [answerId], references: [id])
+
+  @@unique([diagnosticId, questionId])
 }

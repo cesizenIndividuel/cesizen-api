@@ -4,6 +4,7 @@ import { usersRoutes } from "./users.routes";
 import { authRoutes } from "./auth.routes";
 import { articlesRoutes } from "./articles.routes";
 import { categoriesRoutes } from "./categories.routes";
+import { diagnosticsRoutes } from "./diagnostics.routes";
 
 export const router = Router();
 
@@ -12,3 +13,4 @@ router.use("/users", usersRoutes);
 router.use("/auth", authRoutes);
 router.use("/articles", articlesRoutes);
 router.use("/categories", categoriesRoutes);
+router.use("/diagnostic", diagnosticsRoutes);
