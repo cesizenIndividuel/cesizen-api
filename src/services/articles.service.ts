@@ -75,7 +75,7 @@ export const articlesService = {
   //-------------------------------------//
   //        Lister les articles          //
   //-------------------------------------//
-  async listPublic(query: articlesValidators.ListArticlesQuery) {
+  async listPublic(query: articlesValidators.ListArticlesQuery, userId?: string) {
     const { page, limit, q, category } = query;
 
     const where: Prisma.ArticleWhereInput = {
@@ -98,7 +98,39 @@ export const articlesService = {
       publishedAt: "desc"
     });
 
-    return { ok: true as const, items, total };
+    let favoriteIds = new Set<string>();
+
+    //Si l'utilisateur est connecté
+    if (userId) {
+
+      //Récupérer ses articles favoris
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          favoriteArticles: {
+            select: { id: true },
+          },
+        },
+      });
+      //Transformer les favoris en Set pour recherche rapide
+      favoriteIds = new Set(
+        user?.favoriteArticles.map((article) => article.id) ?? []
+      );
+    }
+
+    //Ajouter la propriété isFavorite sur chaque article
+    const itemsWithFavorite = items.map((article) => ({
+      ...article,
+
+      //true si l'article est dans les favoris de l'utilisateur
+      isFavorite: favoriteIds.has(article.id),
+    }));
+
+    return {
+      ok: true as const,
+      items: itemsWithFavorite,
+      total,
+    };
   },
 
   //-------------------------------------//
