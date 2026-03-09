@@ -83,4 +83,31 @@ export const commentsService = {
     return { ok: true as const, comments };
   },
 
+  //-------------------------------------//
+  //      Supprimer un commentaire       //
+  //-------------------------------------//
+  async deleteById(commentId: string, userId: string, role: "USER" | "ADMIN") {
+    const existing = await prisma.comment.findUnique({
+      where: { id: commentId },
+      select: {
+        id: true,
+        userId: true,
+      },
+    });
+
+    if (!existing) {
+      return { ok: false as const, error: "COMMENT_NOT_FOUND" as const };
+    }
+
+    if (role !== "ADMIN" && existing.userId !== userId) {
+      return { ok: false as const, error: "FORBIDDEN" as const };
+    }
+
+    await prisma.comment.delete({
+      where: { id: commentId },
+    });
+
+    return { ok: true as const };
+  },
+
 };
