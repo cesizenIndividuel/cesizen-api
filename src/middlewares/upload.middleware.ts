@@ -72,9 +72,7 @@ export const uploadAvatar = multer({
   fileFilter,
 
   // limite taille fichier : 2MB
-  limits: {
-    fileSize: 2 * 1024 * 1024
-  }
+  limits: { fileSize: 2 * 1024 * 1024 }
 
 }).single("avatar");
 
@@ -87,8 +85,6 @@ export const uploadArticleImage = multer({
   storage: articleImageStorage,
   fileFilter,
 
-  limits: {
-    fileSize: 2 * 1024 * 1024
-  }
+  limits: { fileSize: 2 * 1024 * 1024 }
 
 }).single("image");

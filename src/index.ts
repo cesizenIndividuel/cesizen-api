@@ -8,7 +8,7 @@ import { router } from "./routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 
 // 1) Parse cookies 
-app.use(cookieParser());
+app.use(cookieParser()); 
 
 // 2) Routes
 app.use("/api", router);
@@ -21,6 +21,4 @@ app.use(errorMiddleware);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-app.listen(port, () => {
-  console.log(`API running on http://localhost:${port}`);
-});
+app.listen(port, () => {console.log(`API running on http://localhost:${port}`)});
