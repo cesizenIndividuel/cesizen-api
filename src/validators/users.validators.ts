@@ -1,40 +1,79 @@
 import { z } from "zod";
 import * as CommonSchemas from "./common.schemas";
 
-// Verifie la creation d'un user
-export const createUserSchema = z.object({
+
+//-------------------------------------//
+//            Schéma user              //
+//-------------------------------------//
+
+const zUser = z.object({
+  id: CommonSchemas.uuidSchema,
   email: CommonSchemas.emailSchema,
   password: CommonSchemas.passwordSchema,
-  firstName: CommonSchemas.firstNameSchema.optional(),
-  lastName: CommonSchemas.lastNameSchema.optional(),
+  firstName: CommonSchemas.firstNameSchema,
+  lastName: CommonSchemas.lastNameSchema,
   pseudo: CommonSchemas.pseudoSchema,
-  role: CommonSchemas.roleSchema.optional(),
-  isActive: z.boolean().optional(),
+  role: CommonSchemas.roleSchema,
+  isActive: z.boolean(),
 });
 
-// Verifie l'Id d'un user
-export const userIdParamSchema = z.object({
-  id: CommonSchemas.uuidSchema,
-});
 
-// Verifie la maj d'un user
-export const updateUserSchema = z
-  .object({
-    email: CommonSchemas.emailSchema.optional(),
-    firstName: CommonSchemas.firstNameSchema.optional(),
-    lastName: CommonSchemas.lastNameSchema.optional(),
+//-------------------------------------//
+//          Création user              //
+//-------------------------------------//
+
+export const createUserSchema = zUser
+  .pick({
+    email: true,
+    password: true,
+    firstName: true,
+    lastName: true,
+    pseudo: true,
+    role: true,
+    isActive: true,
   })
+  .extend({
+    firstName: zUser.shape.firstName.optional(),
+    lastName: zUser.shape.lastName.optional(),
+    role: zUser.shape.role.optional(),
+    isActive: zUser.shape.isActive.optional(),
+  });
+
+
+//-------------------------------------//
+//              Id user                //
+//-------------------------------------//
+
+export const userIdParamSchema = zUser.pick({
+  id: true,
+});
+
+
+//-------------------------------------//
+//           Mise à jour user          //
+//-------------------------------------//
+
+export const updateUserSchema = zUser
+  .pick({
+    email: true,
+    firstName: true,
+    lastName: true,
+  })
+  .partial()
   .refine((data) => Object.keys(data).length > 0, {
     message: "Au moins un champ doit être fourni",
   });
 
 
-// Changer son mdp (route /me/password)
+//-------------------------------------//
+//        Changer mot de passe         //
+//-------------------------------------//
+
 export const changeMyPasswordSchema = z
   .object({
-    oldPassword: CommonSchemas.passwordSchema,
-    newPassword: CommonSchemas.passwordSchema,
-    confirmNewPassword: CommonSchemas.passwordSchema,
+    oldPassword: zUser.shape.password,
+    newPassword: zUser.shape.password,
+    confirmNewPassword: zUser.shape.password,
   })
   .superRefine((data, ctx) => {
     if (data.newPassword !== data.confirmNewPassword) {
@@ -46,10 +85,19 @@ export const changeMyPasswordSchema = z
     }
   });
 
-export const toggleUserStatusSchema = z
-.object({
-  isActive: z.boolean(),
+
+//-------------------------------------//
+//         Activer / désactiver        //
+//-------------------------------------//
+
+export const toggleUserStatusSchema = zUser.pick({
+  isActive: true,
 });
+
+
+//-------------------------------------//
+//               Types                 //
+//-------------------------------------//
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
