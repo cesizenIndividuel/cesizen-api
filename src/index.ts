@@ -2,10 +2,19 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 import { app } from "./app";
 import { router } from "./routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
+
+// CORS
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 // 1) Parse cookies 
 app.use(cookieParser()); 
