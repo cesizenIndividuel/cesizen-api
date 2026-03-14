@@ -7,6 +7,9 @@ import { categoriesRoutes } from "./categories.routes";
 import { diagnosticsRoutes } from "./diagnostics.routes";
 import { favoritesRoutes } from "./favorites.routes";
 import { commentsRoutes } from "./comments.routes";
+import { getAdminDashboard } from "../controllers/dashboard.controller";
+import { requireAuth } from "../middlewares/auth.middleware";
+import { requireRole } from "../middlewares/requireRole.middleware";
 
 export const router = Router();
 
@@ -18,3 +21,5 @@ router.use("/categories", categoriesRoutes);
 router.use("/diagnostic", diagnosticsRoutes);
 router.use("/favorites", favoritesRoutes);
 router.use("/comments", commentsRoutes);
+
+router.get("/admin/dashboard", requireAuth, requireRole("ADMIN"), getAdminDashboard);
