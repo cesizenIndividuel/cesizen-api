@@ -34,6 +34,8 @@ export const authService = {
       data: {
         email: data.email,
         pseudo: data.pseudo,
+        firstName: data.firstName,
+        lastName: data.lastName,
         password: passwordHash,
         cguAcceptedAt: new Date(),
         role: "USER",

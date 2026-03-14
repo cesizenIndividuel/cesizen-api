@@ -1,7 +1,6 @@
 import { z } from "zod";
 import * as CommonSchemas from "./common.schemas";
 
-
 //-------------------------------------//
 //           Schéma auth base          //
 //-------------------------------------//
@@ -9,10 +8,11 @@ import * as CommonSchemas from "./common.schemas";
 const zAuth = z.object({
   email: CommonSchemas.emailSchema,
   pseudo: CommonSchemas.pseudoSchema,
+  firstName: CommonSchemas.firstNameSchema,
+  lastName: CommonSchemas.lastNameSchema,
   password: CommonSchemas.passwordSchema,
   cguAccepted: z.boolean(),
 });
-
 
 //-------------------------------------//
 //           Inscription user          //
@@ -22,6 +22,8 @@ export const registerSchema = zAuth
   .pick({
     email: true,
     pseudo: true,
+    firstName: true,
+    lastName: true,
     password: true,
     cguAccepted: true,
   })
@@ -37,7 +39,6 @@ export const registerSchema = zAuth
     message: "Vous devez accepter les CGU",
   });
 
-
 //-------------------------------------//
 //            Connexion user           //
 //-------------------------------------//
@@ -46,7 +47,6 @@ export const loginSchema = zAuth.pick({
   email: true,
   password: true,
 });
-
 
 //-------------------------------------//
 //               Types                 //

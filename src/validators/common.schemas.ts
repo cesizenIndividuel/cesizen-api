@@ -30,14 +30,14 @@ export const searchQuerySchema = z
   .min(1)
   .optional();
 
-
 //-------------------------------------//
 //             Champs user             //
 //-------------------------------------//
 
 export const emailSchema = z
   .email("Email invalide")
-  .trim();
+  .trim()
+  .min(1, "Email obligatoire");
 
 export const passwordSchema = z
   .string()
@@ -46,19 +46,22 @@ export const passwordSchema = z
 export const firstNameSchema = z
   .string()
   .trim()
-  .min(1)
-  .max(50);
+  .min(2, "Le prénom doit contenir au moins 2 caractères")
+  .max(50, "Le prénom doit contenir au maximum 50 caractères");
 
 export const lastNameSchema = z
   .string()
   .trim()
-  .min(1)
-  .max(50);
+  .min(2, "Le nom doit contenir au moins 2 caractères")
+  .max(50, "Le nom doit contenir au maximum 50 caractères");
 
 export const pseudoSchema = z
   .string()
   .trim()
-  .min(3, "Pseudo : 3 caractères minimum")
-  .max(30, "Pseudo : 30 caractères maximum");
+  .min(1, "Pseudo obligatoire")
+  .min(3, "Le pseudo doit contenir au moins 3 caractères")
+  .max(30, "Le pseudo doit contenir au maximum 30 caractères");
 
-export const roleSchema = z.enum(["USER", "ADMIN"]);
+export const roleSchema = z.enum(["USER", "ADMIN"], {
+  message: "Rôle invalide",
+});

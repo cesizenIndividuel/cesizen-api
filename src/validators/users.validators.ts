@@ -53,16 +53,14 @@ export const userIdParamSchema = zUser.pick({
 //           Mise à jour user          //
 //-------------------------------------//
 
-export const updateUserSchema = zUser
-  .pick({
-    email: true,
-    firstName: true,
-    lastName: true,
-  })
-  .partial()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "Au moins un champ doit être fourni",
-  });
+export const updateUserSchema = z.object({
+  email: zUser.shape.email,
+  pseudo: zUser.shape.pseudo,
+  firstName: zUser.shape.firstName.optional(),
+  lastName: zUser.shape.lastName.optional(),
+  role: zUser.shape.role.optional(),
+  isActive: zUser.shape.isActive.optional(),
+});
 
 
 //-------------------------------------//
