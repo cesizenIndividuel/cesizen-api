@@ -41,7 +41,8 @@ export const emailSchema = z
 
 export const passwordSchema = z
   .string()
-  .min(8, "Mot de passe : 8 caractères minimum");
+  .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+  .max(100, "Le mot de passe doit contenir au maximum 100 caractères");
 
 export const firstNameSchema = z
   .string()
