@@ -184,3 +184,16 @@ export const listAdminArticles = asyncHandler(async (req: Request, res: Response
     total: result.total,
   });
 });
+
+//----------------------------------//
+//   Upload image contenu article   //
+//----------------------------------//
+export const uploadArticleContentImage = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "NO_FILE_UPLOADED" });
+  }
+
+  return res.status(201).json({
+    imageUrl: `${req.protocol}://${req.get("host")}/uploads/articles/content/${req.file.filename}`,
+  });
+});
