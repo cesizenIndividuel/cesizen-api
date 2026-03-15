@@ -89,6 +89,23 @@ export const restoreArticle = asyncHandler(async (req: Request, res: Response) =
 });
 
 //----------------------------------//
+//      Détail admin par id         //
+//----------------------------------//
+export const getAdminArticleById = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(articlesValidators.articleIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const result = await articlesService.getByIdAdmin(params.id);
+
+  if (!result.ok) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.article);
+});
+
+
+//----------------------------------//
 //        Modifier article          //
 //----------------------------------//
 export const updateArticle = asyncHandler(async (req: Request, res: Response) => {

@@ -235,6 +235,22 @@ export const articlesService = {
   },
 
   //-------------------------------------//
+  //      Détail admin par id            //
+  //-------------------------------------//
+  async getByIdAdmin(id: string) {
+    const article = await prisma.article.findUnique({
+      where: { id },
+      include: articleInclude,
+    });
+
+    if (!article) {
+      return { ok: false as const, error: "ARTICLE_NOT_FOUND" as const };
+    }
+
+    return { ok: true as const, article };
+  },
+
+  //-------------------------------------//
   //         Modifier un article         //
   //-------------------------------------//
   async updateById(id: string, data: articlesValidators.UpdateArticleInput) {
