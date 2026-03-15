@@ -18,8 +18,8 @@ router.use("/users", usersRoutes);
 router.use("/auth", authRoutes);
 router.use("/articles", articlesRoutes);
 router.use("/categories", categoriesRoutes);
-router.use("/diagnostic", diagnosticsRoutes);
+router.use("/diagnostics", diagnosticsRoutes);
 router.use("/favorites", favoritesRoutes);
 router.use("/comments", commentsRoutes);
 
-router.get("/admin/dashboard", requireAuth, requireRole("ADMIN"), getAdminDashboard);
+router.get("/admin/dashboard", requireAuth, requireRole("ADMIN"), getAdminDashboard);   
