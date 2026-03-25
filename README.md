@@ -53,13 +53,23 @@ Le projet est organisé selon une **architecture en couches inspirée du modèle
 Principe :
 
 - **routes** : définition des endpoints
+- **controllers** : gestion des requêtes HTTP
 - **services** : logique métier
 - **validators** : validation des données avec Zod
 - **utils** : fonctions utilitaires
 - **types** : typage TypeScript
 
 ---
+# Authentification
 
+L’API utilise un système sécurisé basé sur JWT :
+
+- **Access Token** : envoyé dans le header `Authorization: Bearer`
+- **Refresh Token** : stocké en cookie `httpOnly`
+
+Les routes protégées nécessitent un token valide.
+
+---
 # Installation du projet
 
 ## 1.Cloner le projet 
