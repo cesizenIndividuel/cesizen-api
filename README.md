@@ -93,12 +93,14 @@ npm install
 # Configuration 
 Créer un fichier .env à la racine du projet 
 **Exemple**
+```bash
 DATABASE_URL="postgresql://postgres:password@localhost:5432/cesizen"
 
 JWT_SECRET="supersecret"
 REFRESH_TOKEN_SECRET="refreshsecret"
 
 PORT=3000
+```
 
 # Base de donnée
 ## Générer le client Prisma 
