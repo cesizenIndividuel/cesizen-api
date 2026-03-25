@@ -59,7 +59,16 @@ Principe :
 - **types** : typage TypeScript
 
 ---
+# Authentification
 
+L’API utilise un système sécurisé basé sur JWT :
+
+- **Access Token** : envoyé dans le header `Authorization: Bearer`
+- **Refresh Token** : stocké en cookie `httpOnly`
+
+Les routes protégées nécessitent un token valide.
+
+---
 # Installation du projet
 
 ## 1.Cloner le projet 
@@ -83,12 +92,14 @@ npm install
 # Configuration 
 Créer un fichier .env à la racine du projet 
 **Exemple**
+```bash
 DATABASE_URL="postgresql://postgres:password@localhost:5432/cesizen"
 
 JWT_SECRET="supersecret"
 REFRESH_TOKEN_SECRET="refreshsecret"
 
 PORT=3000
+```
 
 # Base de donnée
 ## Générer le client Prisma 
