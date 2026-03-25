@@ -1,7 +1,25 @@
 import { z } from "zod";
 import * as CommonSchemas from "./common.schemas";
 
-//Liste d'article
+
+//-------------------------------------//
+//         Schéma article base         //
+//-------------------------------------//
+
+const zArticle = z.object({
+  id: CommonSchemas.uuidSchema,
+  slug: CommonSchemas.slugSchema,
+  title: z.string().trim().min(3).max(150),
+  content: z.string().trim().min(20),
+  excerpt: z.string().trim().max(300),
+  categoryIds: z.array(CommonSchemas.uuidSchema).max(10),
+});
+
+
+//-------------------------------------//
+//          Liste d'articles           //
+//-------------------------------------//
+
 export const listArticlesQuerySchema = z.object({
   page: CommonSchemas.pageSchema,
   limit: CommonSchemas.limitSchema,
@@ -9,31 +27,60 @@ export const listArticlesQuerySchema = z.object({
   category: z.string().trim().min(1).optional(),
 });
 
-//slug article
-export const articleSlugParamSchema = z.object({
-  slug: CommonSchemas.slugSchema,
+
+//-------------------------------------//
+//           Slug article              //
+//-------------------------------------//
+
+export const articleSlugParamSchema = zArticle.pick({
+  slug: true,
 });
 
-//Création article
-export const createArticleSchema = z.object({
-  title: z.string().trim().min(3).max(150),
-  content: z.string().trim().min(20),
-  excerpt: z.string().trim().max(300).optional(),
-  categoryIds: z.array(CommonSchemas.uuidSchema).optional()
+
+//-------------------------------------//
+//          Création article           //
+//-------------------------------------//
+
+export const createArticleSchema = zArticle
+  .pick({
+    title: true,
+    content: true,
+    excerpt: true,
+    categoryIds: true,
+  })
+  .extend({
+    excerpt: zArticle.shape.excerpt.optional(),
+    categoryIds: zArticle.shape.categoryIds.optional(),
+  });
+
+
+//-------------------------------------//
+//             Id article              //
+//-------------------------------------//
+
+export const articleIdParamSchema = zArticle.pick({
+  id: true,
 });
 
-//id article
-export const articleIdParamSchema = z.object({
-  id: CommonSchemas.uuidSchema,
-});
 
-export const updateArticleSchema = z.object({
-  title: z.string().trim().min(3).max(150).optional(),
-  content: z.string().trim().min(20).optional(),
-  excerpt: z.string().trim().max(300).optional(),
-  categoryIds: z.array(CommonSchemas.uuidSchema).max(10).optional(),
-});
-//Liste d'articles pour admin 
+//-------------------------------------//
+//         Mise à jour article         //
+//-------------------------------------//
+
+export const updateArticleSchema = zArticle
+  .pick({
+    title: true,
+    content: true,
+    excerpt: true,
+    categoryIds: true,
+  })
+  .partial();
+
+
+//-------------------------------------//
+//      Liste d'articles admin         //
+//-------------------------------------//
+
 export const listAdminArticlesQuerySchema = z.object({
   page: CommonSchemas.pageSchema,
   limit: CommonSchemas.limitSchema,
@@ -42,8 +89,9 @@ export const listAdminArticlesQuerySchema = z.object({
 });
 
 
-
-
+//-------------------------------------//
+//               Types                 //
+//-------------------------------------//
 
 export type ListArticlesQuery = z.infer<typeof listArticlesQuerySchema>;
 export type ArticleSlugParam = z.infer<typeof articleSlugParamSchema>;
@@ -51,5 +99,3 @@ export type CreateArticleInput = z.infer<typeof createArticleSchema>;
 export type ArticleIdParam = z.infer<typeof articleIdParamSchema>;
 export type UpdateArticleInput = z.infer<typeof updateArticleSchema>;
 export type ListAdminArticlesQuery = z.infer<typeof listAdminArticlesQuerySchema>;
-
-

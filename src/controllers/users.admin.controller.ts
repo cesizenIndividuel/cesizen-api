@@ -43,24 +43,28 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 //-------------------------------------//
 //            MAJ d'un user            //
 //-------------------------------------//
-export const updateUser = asyncHandler (async (req: Request, res: Response) => {
-  // Valider id
-  const params = parseOr400 (userValidators.userIdParamSchema, req.params, res)
+export const updateUser = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(userValidators.userIdParamSchema, req.params, res);
   if (!params) return;
 
-  //Valider Body
-  const body = parseOr400 (userValidators.updateUserSchema, req.body, res)
+  const body = parseOr400(userValidators.updateUserSchema, req.body, res);
   if (!body) return;
 
   const result = await usersService.updateById(params.id, body);
+
   if (!result.ok) {
-    if (result.error === "EMAIL_ALREADY_USED") {
+    if (
+      result.error === "EMAIL_ALREADY_USED" ||
+      result.error === "PSEUDO_ALREADY_USED"
+    ) {
       return res.status(409).json({ error: result.error });
     }
+
     return res.status(404).json({ error: result.error });
   }
+
   return res.status(200).json(result.user);
-})
+});
 
 //-------------------------------------//
 //          Supprimer un user          //

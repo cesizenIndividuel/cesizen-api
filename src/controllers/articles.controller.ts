@@ -89,6 +89,23 @@ export const restoreArticle = asyncHandler(async (req: Request, res: Response) =
 });
 
 //----------------------------------//
+//      Détail admin par id         //
+//----------------------------------//
+export const getAdminArticleById = asyncHandler(async (req: Request, res: Response) => {
+  const params = parseOr400(articlesValidators.articleIdParamSchema, req.params, res);
+  if (!params) return;
+
+  const result = await articlesService.getByIdAdmin(params.id);
+
+  if (!result.ok) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  return res.status(200).json(result.article);
+});
+
+
+//----------------------------------//
 //        Modifier article          //
 //----------------------------------//
 export const updateArticle = asyncHandler(async (req: Request, res: Response) => {
@@ -100,11 +117,13 @@ export const updateArticle = asyncHandler(async (req: Request, res: Response) =>
 
   const result = await articlesService.updateById(params.id, body);
 
-  if (!result.ok) {
-    if (result.error === "CATEGORY_NOT_FOUND"|| "ARTICLE_NOT_FOUND") {
-      return res.status(404).json({ error: result.error });
-    }
+  if (
+    result.error === "CATEGORY_NOT_FOUND" ||
+    result.error === "ARTICLE_NOT_FOUND"
+  ) {
+    return res.status(404).json({ error: result.error });
   }
+
   return res.status(200).json(result.article);
 });
 
@@ -163,5 +182,18 @@ export const listAdminArticles = asyncHandler(async (req: Request, res: Response
     page: query.page,
     limit: query.limit,
     total: result.total,
+  });
+});
+
+//----------------------------------//
+//   Upload image contenu article   //
+//----------------------------------//
+export const uploadArticleContentImage = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "NO_FILE_UPLOADED" });
+  }
+
+  return res.status(201).json({
+    imageUrl: `${req.protocol}://${req.get("host")}/uploads/articles/content/${req.file.filename}`,
   });
 });

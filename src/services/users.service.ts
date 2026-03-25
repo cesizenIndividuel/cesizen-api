@@ -92,27 +92,42 @@ export const usersService = {
   //------------------------------------//
   async updateById(id: string, data: UpdateUserInput) {
     const existing = await prisma.user.findUnique({ where: { id } });
+
     if (!existing) {
       return { ok: false as const, error: "USER_NOT_FOUND" as const };
     }
 
-    // Si changement email => doit etre unique
+    // si changement email => email unique
     if (data.email && data.email !== existing.email) {
-      const emailUsed = await prisma.user.findUnique({ where: { email: data.email } });
+      const emailUsed = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+
       if (emailUsed) {
         return { ok: false as const, error: "EMAIL_ALREADY_USED" as const };
       }
     }
-    
+
+    // si changement pseudo => pseudo unique
+    if (data.pseudo && data.pseudo !== existing.pseudo) {
+      const pseudoUsed = await prisma.user.findUnique({
+        where: { pseudo: data.pseudo },
+      });
+
+      if (pseudoUsed) {
+        return { ok: false as const, error: "PSEUDO_ALREADY_USED" as const };
+      }
+    }
+
     const user = await prisma.user.update({
       where: { id },
       data: { ...data },
-      select: userSelect
+      select: userSelect,
     });
 
     return { ok: true as const, user };
   },
-
+  
   //------------------------------------//
   //             MAJ du mdp             //
   //------------------------------------//

@@ -53,7 +53,6 @@ Le projet est organisé selon une **architecture en couches inspirée du modèle
 Principe :
 
 - **routes** : définition des endpoints
-- **controllers** : gestion des requêtes HTTP
 - **services** : logique métier
 - **validators** : validation des données avec Zod
 - **utils** : fonctions utilitaires
