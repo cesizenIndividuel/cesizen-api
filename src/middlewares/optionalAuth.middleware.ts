@@ -3,7 +3,7 @@ import { verifyAccessToken } from "../utils/jwt";
 
 export function optionalAuth(req: Request, res: Response, next: NextFunction) {
 
-  //Récupérer le header Authorization
+  //Récupérer le header Authorization (Bearer TOKEN)
   const authHeader = req.headers.authorization;
 
   //Extraire le token
