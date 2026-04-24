@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import { asyncHandler, parseOr400 } from "../utils/http";
 import { registerSchema, loginSchema } from "../validators/auth.validators";
-import { authService } from "../services/auth.service";import { prisma } from "../db/prisma";
-import { hashRefreshToken, generateRefreshToken, getRefreshExpiresAt, signAccessToken } from "../utils/jwt";
+import { authService } from "../services/auth.service";
 
 //----------------------------------//
 //            Inscription           //
@@ -30,7 +29,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.login(body);
 
   if (!result.ok) {
-    // compte inactif = 403, sinon credentials = 401
+    // compte inactif = 403, sinon 401
     const status = result.error === "ACCOUNT_INACTIVE" ? 403 : 401;
     return res.status(status).json({ error: result.error });
   }
@@ -38,7 +37,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   // refresh token dans un cookie sécurisé
   res.cookie("refresh_token", result.refreshToken, {
     httpOnly: true, //faille xss (injection JS)
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production", // only https
     sameSite: "lax", //faille CSRF (use cookie pour faire une action à ma place)
     path: "/api/auth",
     maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -59,8 +58,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
   const result = await authService.refresh(token);
 
   if (!result.ok) {
-    const status = result.error === "REFRESH_EXPIRED" ? 401 : 401;
-    return res.status(status).json({ error: result.error });
+    return res.status(401).json({ error: result.error });
   }
 
   // On remet le nouveau refresh dans le cookie
