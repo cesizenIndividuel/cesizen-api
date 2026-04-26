@@ -1,0 +1,28 @@
+name: Deploy API Recette
+
+on:
+  push:
+    branches:
+      - rct
+
+jobs:
+  deploy-rct:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configurer la clé SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Déployer sur la VM Azure
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd ~/cesizen-api
+            git fetch origin
+            git reset --hard origin/rct
+            docker compose -f docker-compose.rct.yml up -d --build
+            docker exec cesizen-api-rct npx prisma migrate deploy
+          EOF
