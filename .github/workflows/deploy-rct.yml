@@ -6,18 +6,32 @@ on:
       - rct
 
 jobs:
-  deploy-rct:
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configurer la clé SSH
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer dépendances
+        run: npm install
+
+      - name: Lancer les tests
+        run: npm run test
+
+      - name: Configurer SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Déployer sur la VM Azure
+      - name: Déployer sur la VM
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/cesizen-api
