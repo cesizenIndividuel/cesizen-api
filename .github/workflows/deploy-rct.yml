@@ -27,6 +27,9 @@ jobs:
       - name: Lancer les tests
         run: npm run test
 
+      - name: Audit sécurité des dépendances
+        run: npm audit --audit-level=high
+
       - name: Configurer SSH
         run: |
           mkdir -p ~/.ssh
