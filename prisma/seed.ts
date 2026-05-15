@@ -1,13 +1,34 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  // Création / mise à jour de l'admin recette
+  const adminPassword = await bcrypt.hash("Admin123!", 10);
+
+  await prisma.user.upsert({
+    where: { email: "admin.recette@elyzen.fr" },
+    update: {},
+    create: {
+      email: "admin.recette@elyzen.fr",
+      password: adminPassword,
+      pseudo: "admin-recette",
+      role: "ADMIN",
+      isActive: true,
+      cguAcceptedAt: new Date(),
+    },
+  });
+
+  console.log("Admin de recette créé");
+
+  // Nettoyage des données diagnostic
   await prisma.stressDiagnosticAnswer.deleteMany();
   await prisma.stressDiagnostic.deleteMany();
   await prisma.stressAnswer.deleteMany();
   await prisma.stressQuestion.deleteMany();
 
+  // Questions du diagnostic
   const questions = [
     {
       label: "Avez-vous vécu le décès de votre conjoint(e) ?",
