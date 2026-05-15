@@ -9,7 +9,11 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "admin.recette@elyzen.fr" },
-    update: {},
+    update: {
+      password: adminPassword,
+      role: "ADMIN",
+      isActive: true,
+    },
     create: {
       email: "admin.recette@elyzen.fr",
       password: adminPassword,
@@ -19,8 +23,6 @@ async function main() {
       cguAcceptedAt: new Date(),
     },
   });
-
-  console.log("Admin de recette créé");
 
   // Nettoyage des données diagnostic
   await prisma.stressDiagnosticAnswer.deleteMany();
