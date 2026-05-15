@@ -5,8 +5,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      DATABASE_URL: postgresql://cesizen:cesizen@db:5432/cesizen_db
-      NODE_ENV: recette
+      - .env.rct
     depends_on:
       - db
 
