@@ -19,7 +19,10 @@ jobs:
           node-version: 20
 
       - name: Installer dépendances
-        run: npm install
+        run: npm ci
+
+      - name: Générer Prisma Client
+        run: npx prisma generate
 
       - name: Builder l'API
         run: npm run build
@@ -31,11 +34,14 @@ jobs:
         run: npm audit --audit-level=high
 
       - name: Configurer SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          printf "%s\n" "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts || true
 
       - name: Déployer sur la VM
         run: |
@@ -44,5 +50,5 @@ jobs:
             git fetch origin
             git reset --hard origin/rct
             docker compose -f docker-compose.rct.yml up -d --build
-            docker compose -f docker-compose.rct.yml exec -T api npx prisma migrate deploy
+            docker compose -f docker-compose.rct.yml exec -T api-rct npx prisma migrate deploy
           EOF
