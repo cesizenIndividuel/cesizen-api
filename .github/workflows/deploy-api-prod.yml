@@ -1,0 +1,54 @@
+name: Deploy API Production
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  deploy-api-prod:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Générer Prisma Client
+        run: npx prisma generate
+
+      - name: Builder l'API
+        run: npm run build
+
+      - name: Lancer les tests
+        run: npm run test
+
+      - name: Audit sécurité
+        run: npm audit --audit-level=high
+
+      - name: Configurer SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s\n" "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts || true
+
+      - name: Déployer l'API production sur la VM
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd ~/production
+            git fetch --all --tags
+            git checkout ${{ github.ref_name }}
+            sudo docker compose -f docker-compose.prod.yml up -d --build
+            sudo docker compose -f docker-compose.prod.yml exec -T api npx prisma migrate deploy
+          EOF
