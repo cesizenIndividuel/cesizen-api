@@ -1,17 +1,13 @@
 name: CI API
 
 on:
-  push:
-    branches:
-      - dev
-      - rct
-      - main
-
   pull_request:
     branches:
       - dev
-      - rct
-      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   build-test-api:
