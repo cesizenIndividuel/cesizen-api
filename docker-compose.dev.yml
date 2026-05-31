@@ -12,4 +12,11 @@ services:
     env_file:
       - .env.dev
 
+    networks:
+      - cesizen-api_default
+
     restart: unless-stopped
+
+networks:
+  cesizen-api_default:
+    external: true
