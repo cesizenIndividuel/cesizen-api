@@ -50,9 +50,11 @@ jobs:
             git fetch origin
             git reset --hard origin/rct
 
-            docker compose -f docker-compose.rct.yml down --remove-orphans
-            docker rm -f cesizen-api-rct cesizen-postgres-rct cesizen-db-rct || true
+            docker compose -f docker-compose.rct.yml down
 
-            docker compose -f docker-compose.rct.yml up -d --build
+            docker rm -f cesizen-api-rct cesizen-postgres-rct || true
+
+            docker compose -f docker-compose.rct.yml up -d
+
             docker compose -f docker-compose.rct.yml exec -T api npx prisma migrate deploy
           EOF

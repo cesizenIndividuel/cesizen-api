@@ -1,6 +1,6 @@
 services:
   api:
-    build: .
+    image: cesizen-api:dev-latest
     container_name: cesizen-api-rct
     ports:
       - "3002:3000"
