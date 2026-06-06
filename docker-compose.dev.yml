@@ -12,10 +12,32 @@ services:
     env_file:
       - .env.dev
 
+    depends_on:
+      - db-dev
+
     networks:
       - cesizen-api_default
 
     restart: unless-stopped
+
+  db-dev:
+    image: postgres:16
+
+    container_name: cesizen-db-dev
+
+    environment:
+      POSTGRES_USER: cesizen
+      POSTGRES_PASSWORD: cesizen
+      POSTGRES_DB: cesizen_dev
+
+    volumes:
+      - cesizen_pgdata_dev:/var/lib/postgresql/data
+
+    networks:
+      - cesizen-api_default
+
+volumes:
+  cesizen_pgdata_dev:
 
 networks:
   cesizen-api_default:
