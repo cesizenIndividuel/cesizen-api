@@ -50,5 +50,5 @@ jobs:
             git fetch origin
             git reset --hard origin/rct
             docker compose -f docker-compose.rct.yml up -d --build
-            docker compose -f docker-compose.rct.yml exec -T api-rct npx prisma migrate deploy
+            docker compose -f docker-compose.rct.yml exec -T api npx prisma migrate deploy
           EOF

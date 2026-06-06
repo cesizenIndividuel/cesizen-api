@@ -3,7 +3,7 @@ services:
     build: .
     container_name: cesizen-api-rct
     ports:
-      - "3001:3000"
+      - "3002:3000"
     env_file:
       - .env.rct
     depends_on:
