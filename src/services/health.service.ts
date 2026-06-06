@@ -1,5 +1,5 @@
 export const healthService = {
   check() {
-    return { status: "ok" };
+    return { status: "okTEST3" };
   }
 };
