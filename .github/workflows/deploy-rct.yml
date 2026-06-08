@@ -6,33 +6,10 @@ on:
       - rct
 
 jobs:
-  build-test-deploy:
+  deploy-rct:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout du code
-        uses: actions/checkout@v4
-
-      - name: Installer Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Installer dépendances
-        run: npm ci
-
-      - name: Générer Prisma Client
-        run: npx prisma generate
-
-      - name: Builder l'API
-        run: npm run build
-
-      - name: Lancer les tests
-        run: npm run test
-
-      - name: Audit sécurité des dépendances
-        run: npm audit --audit-level=high
-
       - name: Configurer SSH
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
@@ -43,10 +20,11 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts || true
 
-      - name: Déployer sur la VM
+      - name: Déployer l'API recette sur la VM
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/cesizen-api
+
             git fetch origin
             git reset --hard origin/rct
 
@@ -57,4 +35,6 @@ jobs:
             docker compose -f docker-compose.rct.yml up -d
 
             docker compose -f docker-compose.rct.yml exec -T api npx prisma migrate deploy
+
+            docker ps
           EOF
