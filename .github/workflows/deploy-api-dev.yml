@@ -1,4 +1,4 @@
-name: Deploy Dev Global
+name: Deploy API Dev Global
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - dev
 
 jobs:
-  deploy-dev-global:
+  deploy-api-dev:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,36 +23,10 @@ jobs:
       - name: Déployer l'API DEV
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            set -e
-
             cd ~/cesizen-dev/api
             git fetch origin
             git reset --hard origin/dev
 
-            docker build -t cesizen-api:latest .
-
-            docker compose -f docker-compose.dev.yml up -d
-
-            docker compose -f docker-compose.dev.yml exec -T api npx prisma migrate deploy
-            docker compose -f docker-compose.dev.yml exec -T api npx prisma db seed || true
-
-            docker ps
-          EOF
-
-      - name: Déployer le Front DEV
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            set -e
-
-            cd ~/cesizen-dev/front
-            git fetch origin
-            git reset --hard origin/dev
-
-            docker build -t cesizen-front:latest .
-
-            docker rm -f cesizen-front-dev || true
-            docker compose -f docker-compose.dev.yml up -d
-
-            docker ps
-            docker images | grep cesizen
+            cd ~/cesizen-dev
+            docker compose -f docker-compose.dev.yml up -d --build
           EOF
