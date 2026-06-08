@@ -1,0 +1,23 @@
+services:
+  api:
+    image: cesizen-api:dev-latest
+    container_name: cesizen-api-rct
+    ports:
+      - "3002:3000"
+    env_file:
+      - .env.rct
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    container_name: cesizen-postgres-rct
+    environment:
+      POSTGRES_USER: cesizen
+      POSTGRES_PASSWORD: cesizen
+      POSTGRES_DB: cesizen_db
+    volumes:
+      - cesizen_pgdata_rct:/var/lib/postgresql/data
+
+volumes:
+  cesizen_pgdata_rct:
