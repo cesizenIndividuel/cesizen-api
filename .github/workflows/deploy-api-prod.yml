@@ -28,6 +28,8 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/cesizen-prod
 
-            docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate api
+            docker compose -f docker-compose.prod.yml stop api || true
+            docker compose -f docker-compose.prod.yml rm -f api || true
+            docker compose -f docker-compose.prod.yml up -d --no-deps api
             docker compose -f docker-compose.prod.yml exec -T api npx prisma migrate deploy
           EOF
