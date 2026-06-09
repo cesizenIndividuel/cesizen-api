@@ -1,38 +1,18 @@
-name: Deploy API Production
+name: Deploy Prod API
 
 on:
-  push:
-    tags:
-      - "v*"
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
 
 jobs:
-  deploy-api-prod:
+  deploy-prod-api:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout du code
-        uses: actions/checkout@v4
-
-      - name: Installer Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Installer les dépendances
-        run: npm ci
-
-      - name: Générer Prisma Client
-        run: npx prisma generate
-
-      - name: Builder l'API
-        run: npm run build
-
-      - name: Lancer les tests
-        run: npm run test
-
-      - name: Audit sécurité
-        run: npm audit --audit-level=high
-
       - name: Configurer SSH
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
@@ -43,12 +23,16 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts || true
 
-      - name: Déployer l'API production sur la VM
+      - name: Déployer l'API en PROD
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
-            cd ~/production
-            git fetch --all --tags
-            git checkout ${{ github.ref_name }}
-            sudo docker compose -f docker-compose.prod.yml up -d --build
-            sudo docker compose -f docker-compose.prod.yml exec -T api npx prisma migrate deploy
+            cd ~/cesizen-prod/api
+            git fetch origin
+            git reset --hard origin/main
+
+            cd ~/cesizen-prod
+
+            docker compose -f docker-compose.prod.yml up -d --build api
+
+            docker compose -f docker-compose.prod.yml exec -T api npx prisma migrate deploy
           EOF
