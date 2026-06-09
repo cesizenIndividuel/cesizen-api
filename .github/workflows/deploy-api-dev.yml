@@ -29,9 +29,12 @@ jobs:
 
             cd ~/cesizen-dev
 
-            docker build -t cesizen-api:dev ./api
-            docker tag cesizen-api:dev cesizen-api:latest
-
+            docker compose -f docker-compose.dev.yml stop api || true
+            docker compose -f docker-compose.dev.yml rm -f api || true
+            docker compose -f docker-compose.dev.yml build --no-cache api
             docker compose -f docker-compose.dev.yml up -d --no-deps api
+
+            docker tag cesizen-dev-api:latest cesizen-api:latest || true
+
             docker compose -f docker-compose.dev.yml exec -T api npx prisma migrate deploy
           EOF
