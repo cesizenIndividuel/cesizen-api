@@ -1,4 +1,5 @@
-name: Deploy API RCT 
+name: Deploy API RCT
+
 on:
   push:
     branches:
@@ -24,6 +25,6 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/cesizen-rct
 
-            docker rm -f cesizen-api-rct || true
-            docker compose -f docker-compose.rct.yml up -d api
+            docker compose -f docker-compose.rct.yml up -d --no-deps --force-recreate api
+            docker compose -f docker-compose.rct.yml exec -T api npx prisma migrate deploy
           EOF
