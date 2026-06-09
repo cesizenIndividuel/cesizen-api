@@ -1,4 +1,4 @@
-name: Deploy Prod API
+name: Deploy API Prod
 
 on:
   pull_request:
