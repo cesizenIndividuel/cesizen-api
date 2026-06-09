@@ -1,4 +1,4 @@
-name: Deploy API Dev Global
+name: Deploy API Dev
 
 on:
   push:

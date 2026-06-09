@@ -1,5 +1,4 @@
-name: Deploy API Recette
-
+name: Deploy API RCT 
 on:
   push:
     branches:
