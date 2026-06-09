@@ -1,4 +1,4 @@
-name: Deploy API RCT
+name: Deploy API Recette
 
 on:
   push:
@@ -25,5 +25,6 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/cesizen-rct
 
-            docker compose -f docker-compose.rct.yml up -d --no-deps api
+            docker rm -f cesizen-api-rct || true
+            docker compose -f docker-compose.rct.yml up -d api
           EOF
