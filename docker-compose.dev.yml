@@ -1,6 +1,7 @@
 services:
   api:
     image: cesizen-api:latest
+    #utilise la derniere image construite localement pour l'API
     container_name: cesizen-api-dev
 
     ports:
@@ -13,6 +14,7 @@ services:
       - db
 
     networks:
+      #utilise le service api par défaut
       - cesizen-api_default
 
     restart: unless-stopped
