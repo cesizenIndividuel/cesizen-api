@@ -1,14 +1,16 @@
 name: Deploy Prod API
 
 on:
-  push:
-    tags:
-      - 'v*'
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
 
 jobs:
   deploy-prod-api:
     runs-on: ubuntu-latest
-
+    if: github.event.pull_request.merged == true
     steps:
       - name: Configurer SSH
         env:
@@ -22,16 +24,11 @@ jobs:
 
       - name: Déployer l'API PROD
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/cesizen-prod
 
-            VERSION=${{ github.ref_name }}
-            echo "Déploiement API PROD version $VERSION"
-
-            docker tag cesizen-api:latest cesizen-api:$VERSION
-
-            VERSION=$VERSION docker compose -f docker-compose.prod.yml stop api || true
-            VERSION=$VERSION docker compose -f docker-compose.prod.yml rm -f api || true
-            VERSION=$VERSION docker compose -f docker-compose.prod.yml up -d --no-deps api
-            VERSION=$VERSION docker compose -f docker-compose.prod.yml exec -T api npx prisma migrate deploy
+            docker compose -f docker-compose.prod.yml stop api || true
+            docker compose -f docker-compose.prod.yml rm -f api || true
+            docker compose -f docker-compose.prod.yml up -d --no-deps api
+            docker compose -f docker-compose.prod.yml exec -T api npx prisma migrate deploy
           EOF
