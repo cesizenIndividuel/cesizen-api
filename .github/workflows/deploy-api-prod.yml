@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*'
+  release:
+    types: [published]
+  workflow_dispatch:
 
 jobs:
   deploy-prod-api:
@@ -21,11 +24,12 @@ jobs:
           ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts || true
 
       - name: Déployer l'API PROD
+        env:
+          VERSION: ${{ github.event.release.tag_name || github.ref_name }}
         run: |
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
             cd ~/cesizen-prod
 
-            VERSION=${{ github.ref_name }}
             echo "Déploiement API PROD version $VERSION"
 
             docker tag cesizen-api:latest cesizen-api:$VERSION
