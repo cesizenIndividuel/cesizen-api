@@ -1,17 +1,14 @@
-name: Deploy Prod API
-
 on:
-  push:
-    tags:
-      - 'v*'
-  release:
-    types: [published]
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - rct
+    types:
+      - closed
 
 jobs:
-  deploy-prod-api:
+  deploy-api-rct:
     runs-on: ubuntu-latest
-
+    if: github.event.pull_request.merged == true
     steps:
       - name: Configurer SSH
         env:
@@ -23,18 +20,13 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -T 30 -H "$SSH_HOST" >> ~/.ssh/known_hosts || true
 
-      - name: Déployer l'API PROD
-        env:
-          VERSION: ${{ github.event.release.tag_name || github.ref_name }}
+      - name: Déployer l'API RCT
         run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
-            cd ~/cesizen-prod
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd ~/cesizen-rct
 
-            echo "Déploiement API PROD version $VERSION"
-
-            docker tag cesizen-api:latest cesizen-api:$VERSION
-
-            VERSION=$VERSION docker compose -f docker-compose.prod.yml stop api || true
-            VERSION=$VERSION docker compose -f docker-compose.prod.yml rm -f api || true
-            VERSION=$VERSION docker compose -f docker-compose.prod.yml up -d --no-deps api
+            docker compose -f docker-compose.rct.yml stop api || true
+            docker compose -f docker-compose.rct.yml rm -f api || true
+            docker compose -f docker-compose.rct.yml up -d --no-deps api
+            docker compose -f docker-compose.rct.yml exec -T api npx prisma migrate deploy
           EOF
